@@ -1,0 +1,29 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+
+# --- Secrets / env ---
+.env
+
+# --- SQLite (checkpoints + ledger, regenerated at runtime) ---
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+checkpoints.sqlite*
+ledger.sqlite*
+
+# --- Node / frontend ---
+web/node_modules/
+web/dist/
+web/.vite/
+
+# --- Corpus (cloned, large; fetch with scripts/fetch_corpus.sh) ---
+corpus/
+
+# --- OS ---
+.DS_Store
+Thumbs.db

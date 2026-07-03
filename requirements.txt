@@ -1,0 +1,13 @@
+# Legacy Move — Python dependencies
+# ---- FROZEN PINS (do NOT change without lead sign-off — see Claude.MD §15) ----
+langgraph==1.2.7                      # NOT 1.1.x (interrupt/checkpoint regression #7361)
+langgraph-checkpoint-sqlite==3.1.0    # AsyncSqliteSaver; requires aiosqlite
+rfc8785                               # RFC 8785 (JCS) canonical JSON for the ledger hash-chain
+anthropic                             # Claude API + structured outputs beta (demo path)
+# ---- Supporting libs (named in §15; versions flexible) ----
+fastapi                               # async API
+uvicorn[standard]                     # ASGI server
+aiosqlite                             # async SQLite driver (AsyncSqliteSaver dependency)
+pydantic                              # structured-output models + validation
+python-dotenv                         # load .env
+httpx                                 # OllamaProvider (Tier 3) + general HTTP
