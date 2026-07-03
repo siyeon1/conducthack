@@ -73,6 +73,7 @@ export default function App() {
   const [editing, setEditing] = useState(false);
   const [editedDiff, setEditedDiff] = useState("");
   const [gateBusy, setGateBusy] = useState(false);
+  const [rationale, setRationale] = useState(""); // required justification, hashed into the ledger
 
   // Ledger
   const [ledger, setLedger] = useState({ entries: [], verified: true });
@@ -126,17 +127,29 @@ export default function App() {
 
   async function handleDecision(decision) {
     if (!sessionId) return;
+    // Attested approval: a state-changing decision must carry the human's reasoning.
+    if (decision !== "reject" && !rationale.trim()) {
+      setErrors((e) => ({
+        ...e,
+        propose: { error: "A justification is required to approve or edit this change." },
+      }));
+      return;
+    }
     setGateBusy(true);
     setErrors((e) => ({ ...e, propose: null }));
     try {
       const { state: st } = await approveCell(
         sessionId,
         decision,
-        decision === "edit" ? editedDiff : undefined
+        decision === "edit" ? editedDiff : undefined,
+        decision === "reject" ? undefined : rationale.trim()
       );
       setState(st);
       setEditing(false);
-      if (decision !== "reject") await refreshLedger();
+      if (decision !== "reject") {
+        setRationale("");
+        await refreshLedger();
+      }
     } catch (e) {
       setErrors((er) => ({ ...er, propose: e }));
     } finally {
@@ -515,14 +528,31 @@ export default function App() {
                       — the agent will not apply or record this change on its own.
                     </span>
                   </div>
+
+                  <div className="mb-3">
+                    <label className="mb-1.5 flex flex-wrap items-center gap-1.5 text-[11px] font-medium uppercase tracking-wider text-amber-200/80">
+                      Justification <span className="text-rose-300">*</span>
+                      <span className="font-normal normal-case tracking-normal text-amber-200/50">
+                        — recorded verbatim in the ledger and hash-chained with the diff
+                      </span>
+                    </label>
+                    <textarea
+                      value={rationale}
+                      onChange={(e) => setRationale(e.target.value)}
+                      placeholder="Why is this change correct and safe to apply? e.g. mirrors the existing MORTGAGE/LOAN guard; localized to the debit side; no copybook or interface change."
+                      className="h-20 w-full resize-y rounded-lg border border-amber-500/30 bg-ink-950/70 p-2.5 text-[13px] leading-relaxed text-slate-200 outline-none placeholder:text-slate-600 focus:border-amber-400/70"
+                    />
+                  </div>
+
                   <div className="flex flex-wrap gap-2">
                     {!editing ? (
                       <>
                         <button
                           type="button"
-                          disabled={gateBusy}
+                          disabled={gateBusy || !rationale.trim()}
+                          title={!rationale.trim() ? "Enter a justification to approve" : undefined}
                           onClick={() => handleDecision("approve")}
-                          className="rounded-lg bg-emerald-600 px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-emerald-900/40 transition hover:bg-emerald-500 disabled:opacity-40"
+                          className="rounded-lg bg-emerald-600 px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-emerald-900/40 transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-40"
                         >
                           ✓ Approve
                         </button>
@@ -550,9 +580,10 @@ export default function App() {
                       <>
                         <button
                           type="button"
-                          disabled={gateBusy}
+                          disabled={gateBusy || !rationale.trim()}
+                          title={!rationale.trim() ? "Enter a justification to approve" : undefined}
                           onClick={() => handleDecision("edit")}
-                          className="rounded-lg bg-emerald-600 px-5 py-2 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:opacity-40"
+                          className="rounded-lg bg-emerald-600 px-5 py-2 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-40"
                         >
                           ✓ Approve edited diff
                         </button>
@@ -631,6 +662,16 @@ export default function App() {
                     truncate
                   />
                 </dl>
+                {recordEntry.rationale && (
+                  <div className="mt-3 border-t border-emerald-500/20 pt-3">
+                    <div className="mb-1 text-[11px] font-medium uppercase tracking-wider text-emerald-200/70">
+                      Justification (hash-chained)
+                    </div>
+                    <p className="text-[13px] italic leading-relaxed text-slate-300">
+                      “{recordEntry.rationale}”
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           ) : (

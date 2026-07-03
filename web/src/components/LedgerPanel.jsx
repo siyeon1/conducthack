@@ -116,13 +116,14 @@ export default function LedgerPanel({ sessionId, entries, onRefresh }) {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[720px] border-collapse text-sm">
+            <table className="w-full min-w-[860px] border-collapse text-sm">
               <thead>
                 <tr className="text-left text-[11px] uppercase tracking-wider text-slate-500">
                   <th className="px-2 py-2 font-medium">#</th>
                   <th className="px-2 py-2 font-medium">Intent</th>
                   <th className="px-2 py-2 font-medium">Programs</th>
                   <th className="px-2 py-2 font-medium">Decision</th>
+                  <th className="px-2 py-2 font-medium">Justification</th>
                   <th className="px-2 py-2 font-medium">Approver</th>
                   <th className="px-2 py-2 font-medium">prev → entry hash</th>
                 </tr>
@@ -159,6 +160,13 @@ export default function LedgerPanel({ sessionId, entries, onRefresh }) {
                         <span className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[11px] font-medium text-emerald-300">
                           {e.decision}
                         </span>
+                      </td>
+                      <td className="max-w-[240px] px-2 py-2.5 text-[12px] italic text-slate-400">
+                        {e.rationale ? (
+                          `“${e.rationale}”`
+                        ) : (
+                          <span className="not-italic text-slate-600">—</span>
+                        )}
                       </td>
                       <td className="px-2 py-2.5 font-mono text-[12px] text-slate-400">
                         {e.approver}

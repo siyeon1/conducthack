@@ -119,6 +119,7 @@ class LedgerStore:
         diff: str,
         decision: str,
         approver: str = "engineer@bank",
+        rationale: str = "",
     ) -> LedgerEntry:
         existing = self.entries(session_id)
         index = len(existing)
@@ -134,6 +135,7 @@ class LedgerStore:
             "diff_hash": sha256_hex(diff),
             "decision": decision,
             "approver": approver,
+            "rationale": rationale,
             "prev_hash": prev_hash,
         }
         entry["entry_hash"] = canonical_entry_hash(entry)

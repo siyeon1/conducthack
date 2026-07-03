@@ -242,7 +242,7 @@ export const MOCK_METRICS = {
 
 // --- LEDGER ---------------------------------------------------------------- //
 // A representative approved entry (hashes are illustrative in mock mode).
-export function mockLedgerEntry(session_id, decision = "approve") {
+export function mockLedgerEntry(session_id, decision = "approve", rationale = "") {
   return {
     index: 0,
     session_id,
@@ -255,6 +255,9 @@ export function mockLedgerEntry(session_id, decision = "approve") {
       "3c7a1e904d2f6b8a5c1d0e7f4a2b9c6d8e3f1a0b7c4d9e2f6a3b8c5d1e0f7a94",
     decision,
     approver: "engineer@bank",
+    rationale:
+      rationale ||
+      "Guard mirrors the existing MORTGAGE/LOAN pattern; localized to the debit side; no copybook or interface change.",
     prev_hash: "",
     entry_hash:
       "a1b2c3d4e5f60718293a4b5c6d7e8f9012a3b4c5d6e7f8091a2b3c4d5e6f7081",

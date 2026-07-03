@@ -139,7 +139,7 @@ async function mockRunCell(session_id, cell, selected_program) {
   return { state: clone(state) };
 }
 
-async function mockApprove(session_id, decision, edited_diff) {
+async function mockApprove(session_id, decision, edited_diff, rationale) {
   const store = ensure(session_id);
   const state = store.state;
   await delay(360);
@@ -165,7 +165,7 @@ async function mockApprove(session_id, decision, edited_diff) {
   state.cells.propose.proposed_diff = finalDiff;
   state.cells.approve.status = "approved";
 
-  const entry = mockLedgerEntry(session_id, decision);
+  const entry = mockLedgerEntry(session_id, decision, rationale);
   entry.index = store.ledger.length;
   entry.prev_hash = store.ledger.length
     ? store.ledger[store.ledger.length - 1].entry_hash
@@ -205,10 +205,11 @@ export async function runCell(session_id, cell, selected_program) {
   return apiFetch("/cell/run", { method: "POST", body });
 }
 
-export async function approveCell(session_id, decision, edited_diff) {
-  if (USE_MOCK) return mockApprove(session_id, decision, edited_diff);
+export async function approveCell(session_id, decision, edited_diff, rationale) {
+  if (USE_MOCK) return mockApprove(session_id, decision, edited_diff, rationale);
   const body = { session_id, decision };
   if (decision === "edit") body.edited_diff = edited_diff;
+  if (rationale) body.rationale = rationale;
   return apiFetch("/cell/approve", { method: "POST", body });
 }
 

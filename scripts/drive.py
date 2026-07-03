@@ -33,7 +33,12 @@ def run_once(run_no: int, c: httpx.Client) -> None:
     print("PROPOSE:", pc["status"], "| diff chars:", len(pc.get("proposed_diff") or ""))
     assert pc["status"] == "awaiting_approval" and (pc.get("proposed_diff") or ""), "propose must gate with a diff"
 
-    st = c.post(f"{BASE}/cell/approve", json={"session_id": sid, "decision": "approve"}).json()["state"]
+    approve_body = {
+        "session_id": sid,
+        "decision": "approve",
+        "rationale": "Guard mirrors the existing MORTGAGE/LOAN pattern; localized to the debit side; no copybook or interface change.",
+    }
+    st = c.post(f"{BASE}/cell/approve", json=approve_body).json()["state"]
     print("RECORD:", st["cells"]["record"]["status"], "| ledger_head:", (st.get("ledger_head") or "")[:12])
     assert st["cells"]["record"]["status"] == "done"
 

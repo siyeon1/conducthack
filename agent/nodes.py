@@ -41,6 +41,7 @@ class GraphState(SessionState, total=False):
     run_cell: str              # which cell this invocation should run (routing)
     decision: Optional[str]    # set by approve_node after the human gate
     edited_diff: Optional[str]
+    rationale: Optional[str]   # the human's typed justification, carried to the ledger
     proposed_diff: Optional[str]  # top-level channel mirrored into cells['propose'].proposed_diff;
     #                               NOT part of the frozen SessionState (which carries it per-cell)
 
@@ -351,6 +352,7 @@ def approve_node(state: GraphState) -> dict:
     )
     decision = (resume or {}).get("decision", "approve") if isinstance(resume, dict) else "approve"
     edited = (resume or {}).get("edited_diff") if isinstance(resume, dict) else None
+    rationale = (resume or {}).get("rationale", "") if isinstance(resume, dict) else ""
 
     cells = dict(state.get("cells", {}))
     pc = dict(cells.get("propose", {}))
@@ -362,7 +364,7 @@ def approve_node(state: GraphState) -> dict:
         pc["status"] = "rejected"
         pc["summary"] = "Change rejected — re-run Propose to draft a different change."
     cells["propose"] = pc
-    return {"decision": decision, "edited_diff": edited, "cells": cells}
+    return {"decision": decision, "edited_diff": edited, "rationale": rationale, "cells": cells}
 
 
 def record_node(state: GraphState) -> dict:
@@ -382,6 +384,7 @@ def record_node(state: GraphState) -> dict:
             explanation=explanation,
             diff=diff,
             decision=decision,
+            rationale=str(state.get("rationale") or ""),
         )
         result = _cell(
             "record", "done",

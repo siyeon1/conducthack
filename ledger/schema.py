@@ -19,6 +19,7 @@ class LedgerEntry(TypedDict):
     diff_hash: str          # sha256 of the approved diff
     decision: str           # "approve" | "edit"
     approver: str           # user identity string (demo: "engineer@bank")
+    rationale: str          # the human's typed justification for approving this change
     prev_hash: str          # entry_hash of previous entry ("" for genesis)
     entry_hash: str         # sha256 of THIS entry's canonical bytes (excluding entry_hash)
 
@@ -36,5 +37,6 @@ HASHED_FIELDS: tuple[str, ...] = (
     "diff_hash",
     "decision",
     "approver",
+    "rationale",
     "prev_hash",
 )

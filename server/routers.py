@@ -55,6 +55,7 @@ class CellApprove(BaseModel):
     session_id: str
     decision: str  # "approve" | "edit" | "reject"
     edited_diff: str | None = None
+    rationale: str | None = None  # required for approve/edit — the human's typed justification
 
 
 class SessionRef(BaseModel):
@@ -112,9 +113,13 @@ async def cell_approve(body: CellApprove, request: Request):
         return _err(400, "invalid decision", body.decision)
     if body.decision == "edit" and not body.edited_diff:
         return _err(400, "edited_diff is required when decision == 'edit'")
+    if body.decision in ("approve", "edit") and not (body.rationale or "").strip():
+        # Attested approval: a state-changing decision must carry the human's reasoning, which is
+        # hash-chained into the ledger. Re-validated here — never trust the client-side gate.
+        return _err(400, "a justification (rationale) is required to approve or edit")
 
     cfg = {"configurable": {"thread_id": sess["thread_id"]}}
-    resume = {"decision": body.decision, "edited_diff": body.edited_diff}
+    resume = {"decision": body.decision, "edited_diff": body.edited_diff, "rationale": body.rationale or ""}
     try:
         # Resume the graph on the SAME thread — the resume value becomes the return of
         # interrupt() inside approve_node (§8.2 resume mechanics / L2).
