@@ -6,6 +6,7 @@ import GraphView from "./GraphView.jsx";
 import LedgerPanel from "./LedgerPanel.jsx";
 import SourceView from "./SourceView.jsx";
 import AffectedList from "./AffectedList.jsx";
+import CodeCockpit from "./CodeCockpit.jsx";
 import { USE_MOCK, createSession, runCell, approveCell, getLedger } from "../api.js";
 
 // ------------------------------------------------------------------ //
@@ -66,6 +67,7 @@ export default function StageCockpit({ node, onBack, onStatusChange, onRecorded 
     (node.edit_sites && node.edit_sites[0]) || "XFRFUN"
   );
   const [sourceOpen, setSourceOpen] = useState(null); // program/copybook to view, or null
+  const [view, setView] = useState("code"); // "notebook" | "code" — Level-2 view mode
 
   // Propose gate local UI
   const [editing, setEditing] = useState(false);
@@ -194,8 +196,32 @@ export default function StageCockpit({ node, onBack, onStatusChange, onRecorded 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [recordEntry && recordEntry.entry_hash]);
 
+  const codeCtx = {
+    node,
+    state,
+    cell,
+    status,
+    running,
+    errors,
+    handleRun,
+    selectedProgram,
+    setSelectedProgram,
+    programOptions,
+    proposeCell,
+    gateOpen,
+    editing,
+    setEditing,
+    editedDiff,
+    setEditedDiff,
+    gateBusy,
+    rationale,
+    setRationale,
+    handleDecision,
+    recordEntry,
+  };
+
   return (
-    <div className="mx-auto min-h-full max-w-5xl px-4 pb-20 pt-6 sm:px-6">
+    <div className={`mx-auto min-h-full px-4 pb-20 pt-6 sm:px-6 ${view === "code" ? "max-w-[1400px]" : "max-w-5xl"}`}>
       {/* ---------------- Scoped stage header ---------------- */}
       <header className="mb-6">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
@@ -207,6 +233,22 @@ export default function StageCockpit({ node, onBack, onStatusChange, onRecorded 
             ← Back to programme
           </button>
           <div className="flex items-center gap-2">
+            <div className="flex items-center rounded-lg border border-slate-600/60 bg-ink-950/60 p-0.5 text-xs font-medium">
+              <button
+                type="button"
+                onClick={() => setView("code")}
+                className={`rounded-md px-2.5 py-1 transition ${view === "code" ? "bg-slate-700 text-slate-100" : "text-slate-400 hover:text-slate-200"}`}
+              >
+                ⌨ Code editor
+              </button>
+              <button
+                type="button"
+                onClick={() => setView("notebook")}
+                className={`rounded-md px-2.5 py-1 transition ${view === "notebook" ? "bg-slate-700 text-slate-100" : "text-slate-400 hover:text-slate-200"}`}
+              >
+                Notebook
+              </button>
+            </div>
             <span
               className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-medium text-emerald-300"
               title="Placeholder — flips on when the local (Ollama) provider is active"
@@ -298,6 +340,10 @@ export default function StageCockpit({ node, onBack, onStatusChange, onRecorded 
         )}
       </header>
 
+      {view === "code" && <CodeCockpit ctx={codeCtx} onOpenSource={setSourceOpen} />}
+
+      {view === "notebook" && (
+      <>
       {/* ---------------- Notebook cells ---------------- */}
       <div className="space-y-5">
         {/* 1 — LOCATE */}
@@ -659,6 +705,8 @@ export default function StageCockpit({ node, onBack, onStatusChange, onRecorded 
         Legacy Move · read-only cells run freely · the state-changing step is gated behind explicit
         human approval · every approved change is provable.
       </footer>
+      </>
+      )}
 
       <SourceView name={sourceOpen} onClose={() => setSourceOpen(null)} />
     </div>
