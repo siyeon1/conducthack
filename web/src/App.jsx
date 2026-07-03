@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import Cell from "./components/Cell.jsx";
-import { VerifiedBadge, RiskBadge, InGraphBadge } from "./components/Badge.jsx";
+import { VerifiedBadge } from "./components/Badge.jsx";
 import DiffView from "./components/DiffView.jsx";
 import GraphView from "./components/GraphView.jsx";
 import LedgerPanel from "./components/LedgerPanel.jsx";
 import SourceView from "./components/SourceView.jsx";
+import AffectedList from "./components/AffectedList.jsx";
 import {
   USE_MOCK,
   createSession,
@@ -442,23 +443,7 @@ export default function App() {
         >
           {cell("impact").payload && cell("impact").payload.affected ? (
             <div className="space-y-5">
-              <ul className="space-y-2">
-                {cell("impact").payload.affected.map((a, i) => (
-                  <li
-                    key={i}
-                    className="animate-fade-in flex flex-col gap-1 rounded-lg border border-slate-700/50 bg-ink-950/40 p-3 sm:flex-row sm:items-start sm:gap-3"
-                  >
-                    <div className="flex flex-wrap items-center gap-2 sm:w-56 sm:shrink-0">
-                      <span className="font-mono text-sm font-semibold text-slate-100">
-                        {a.program}
-                      </span>
-                      <RiskBadge risk={a.risk} />
-                      <InGraphBadge inGraph={a.in_graph} />
-                    </div>
-                    <p className="text-sm text-slate-400">{a.relationship}</p>
-                  </li>
-                ))}
-              </ul>
+              <AffectedList affected={cell("impact").payload.affected} />
 
               <div>
                 <h4 className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
