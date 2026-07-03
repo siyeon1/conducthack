@@ -1,38 +1,155 @@
-import { useMemo, useState } from "react";
-import { ReactFlow, Background, Controls, MarkerType } from "@xyflow/react";
+import { useCallback, useEffect, useState } from "react";
+import {
+  ReactFlow,
+  Background,
+  Controls,
+  MarkerType,
+  useNodesState,
+  useEdgesState,
+  addEdge,
+} from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import StatusNode from "./StatusNode.jsx";
 import { layoutProgramme } from "../programme.js";
 
 const nodeTypes = { stage: StatusNode };
 
-// Level-1 — the Change Programme canvas. A change request is decomposed (live, or the canned
-// fallback) into a DAG; each node's status is shown, and clicking a node opens its Level-2
-// cockpit. Editing the plan (add/reorder/approve) arrives in Stage 3.
-export default function ProgrammeCanvas({
-  programme,
-  statuses = {},
-  onOpenNode,
-  onGenerate,
-  generating = false,
-  planError = null,
-}) {
-  const [req, setReq] = useState(programme.title || "");
-  const { nodes, edges } = useMemo(() => layoutProgramme(programme, statuses), [programme, statuses]);
-
-  const total = programme.nodes.length;
-  const done = programme.nodes.filter((n) => (statuses[n.id] || "pending") === "done").length;
-  const pct = total ? Math.round((done / total) * 100) : 0;
-
-  const rfEdges = edges.map((e) => ({
+// Verified edges (a parsed dependency exists) render solid emerald; inferred edges (LLM ordering,
+// or a human-added link) render dashed amber + animated. Styling lives on the edge objects so the
+// controlled edge state stays the single source of truth.
+function styleEdge(e) {
+  const verified = !!(e.data && e.data.verified);
+  return {
     ...e,
-    markerEnd: { type: MarkerType.ArrowClosed, color: "#64748b", width: 18, height: 18 },
-    style: { stroke: "#475569", strokeWidth: 1.5 },
+    animated: !verified,
+    markerEnd: { type: MarkerType.ArrowClosed, color: verified ? "#34d399" : "#f59e0b", width: 18, height: 18 },
+    style: { stroke: verified ? "#10b981" : "#f59e0b", strokeWidth: 1.6, strokeDasharray: verified ? undefined : "6 5" },
     labelStyle: { fill: "#94a3b8", fontSize: 10 },
     labelBgStyle: { fill: "#0f172a", fillOpacity: 0.85 },
     labelBgPadding: [4, 2],
     labelBgBorderRadius: 4,
-  }));
+  };
+}
+
+// Level-1 — the Change Programme canvas. A generated/seed plan opens in DRAFT: the engineer can
+// drag, rename, add, delete, and re-link sub-changes (cycle-prevented), then APPROVE to lock the
+// structure and unlock execution (clicking a node opens its Level-2 cockpit).
+export default function ProgrammeCanvas({
+  programme,
+  statuses = {},
+  approved = false,
+  onOpenNode,
+  onGenerate,
+  generating = false,
+  planError = null,
+  onApprove,
+  onReopen,
+}) {
+  const [req, setReq] = useState(programme.title || "");
+  const [nodes, setNodes, onNodesChange] = useNodesState([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const [selectedId, setSelectedId] = useState(null);
+
+  // Re-seed the canvas from the plan whenever the plan itself changes (new generation / approve).
+  useEffect(() => {
+    const { nodes: n, edges: e } = layoutProgramme(programme, statuses);
+    setNodes(n);
+    setEdges(e.map(styleEdge));
+    setSelectedId(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [programme]);
+
+  // Recolor nodes as statuses change during execution — WITHOUT re-laying-out (preserve positions).
+  useEffect(() => {
+    setNodes((nds) => nds.map((n) => ({ ...n, data: { ...n.data, status: statuses[n.id] || "pending" } })));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [statuses]);
+
+  // Block any connection that would create a cycle (keep the plan a DAG) or a self-loop.
+  const isValidConnection = useCallback(
+    (conn) => {
+      if (!conn.source || !conn.target || conn.source === conn.target) return false;
+      const adj = {};
+      edges.forEach((e) => (adj[e.source] = adj[e.source] || []).push(e.target));
+      const stack = [conn.target];
+      const seen = new Set();
+      while (stack.length) {
+        const x = stack.pop();
+        if (x === conn.source) return false; // target already reaches source → cycle
+        if (seen.has(x)) continue;
+        seen.add(x);
+        (adj[x] || []).forEach((t) => stack.push(t));
+      }
+      return true;
+    },
+    [edges]
+  );
+
+  const onConnect = useCallback(
+    (conn) =>
+      setEdges((eds) =>
+        addEdge(
+          styleEdge({ ...conn, id: `e-${conn.source}-${conn.target}-${eds.length}`, label: "depends on", data: { verified: false } }),
+          eds
+        )
+      ),
+    [setEdges]
+  );
+
+  const onNodeClick = useCallback(
+    (_, node) => {
+      if (approved) onOpenNode && onOpenNode(node.id);
+      else setSelectedId(node.id);
+    },
+    [approved, onOpenNode]
+  );
+
+  const addStage = () => {
+    const id = `stage-${nodes.length + 1}-${Math.round(nodes.reduce((a, n) => a + (n.position?.x || 0), 7) % 9973)}`;
+    setNodes((nds) => [
+      ...nds.map((n) => ({ ...n, selected: false })),
+      {
+        id,
+        type: "stage",
+        position: { x: 40, y: 40 + nds.length * 8 },
+        selected: true,
+        data: { label: "New sub-change", status: "pending", editSites: [], changeRequest: "Describe this sub-change…" },
+      },
+    ]);
+    setSelectedId(id);
+  };
+
+  const updateSelected = (patch) =>
+    setNodes((nds) => nds.map((n) => (n.id === selectedId ? { ...n, data: { ...n.data, ...patch } } : n)));
+
+  const deleteSelected = () => {
+    if (!selectedId) return;
+    setNodes((nds) => nds.filter((n) => n.id !== selectedId));
+    setEdges((eds) => eds.filter((e) => e.source !== selectedId && e.target !== selectedId));
+    setSelectedId(null);
+  };
+
+  const approve = () => {
+    const pnodes = nodes.map((n) => ({
+      id: n.id,
+      label: n.data.label,
+      change_request: n.data.changeRequest,
+      edit_sites: n.data.editSites || [],
+      position: n.position,
+    }));
+    const pedges = edges.map((e) => ({
+      source: e.source,
+      target: e.target,
+      reason: e.label || "",
+      verified: !!(e.data && e.data.verified),
+    }));
+    onApprove && onApprove({ ...programme, nodes: pnodes, edges: pedges });
+  };
+
+  const total = nodes.length;
+  const done = nodes.filter((n) => (n.data.status || "pending") === "done").length;
+  const pct = total ? Math.round((done / total) * 100) : 0;
+  const selectedNode = nodes.find((n) => n.id === selectedId) || null;
 
   const submit = () => {
     if (onGenerate && req.trim() && !generating) onGenerate(req);
@@ -41,7 +158,7 @@ export default function ProgrammeCanvas({
   return (
     <div className="mx-auto max-w-6xl px-4 pb-16 pt-6 sm:px-6">
       {/* Header */}
-      <header className="mb-5">
+      <header className="mb-4">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-sky-500 text-lg shadow-lg shadow-indigo-900/40">
@@ -59,7 +176,7 @@ export default function ProgrammeCanvas({
           </div>
         </div>
 
-        {/* Change request input + progress */}
+        {/* Change request input */}
         <div className="rounded-2xl border border-slate-700/60 bg-ink-900/60 p-4 shadow-xl shadow-black/20 backdrop-blur-sm">
           <label className="mb-1.5 block text-[11px] font-medium uppercase tracking-wider text-slate-400">
             Business change request
@@ -90,7 +207,6 @@ export default function ProgrammeCanvas({
               )}
             </button>
           </div>
-
           <div className="mt-2 flex flex-wrap items-center gap-2">
             {programme.source === "llm" && (
               <span className="rounded-full border border-indigo-500/30 bg-indigo-500/10 px-2 py-0.5 text-[11px] font-medium text-indigo-300">
@@ -107,49 +223,153 @@ export default function ProgrammeCanvas({
             )}
             {programme.subtitle && <span className="text-xs text-slate-400">{programme.subtitle}</span>}
           </div>
-
           {planError && (
             <div className="mt-2 rounded-lg border border-rose-500/40 bg-rose-500/10 px-3 py-2 text-sm text-rose-200">
               Could not generate a plan: {planError.error || String(planError)}
             </div>
           )}
-
-          <div className="mt-3 flex items-center gap-3">
-            <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-700/50">
-              <div
-                className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-emerald-400 transition-all"
-                style={{ width: `${pct}%` }}
-              />
-            </div>
-            <span className="shrink-0 text-xs font-medium text-slate-300">
-              <span className="text-emerald-300">{done}</span> of {total} stages done
-            </span>
-          </div>
         </div>
       </header>
+
+      {/* Control bar — plan gate + progress */}
+      <div className="mb-2 flex flex-wrap items-center gap-3 rounded-xl border border-slate-700/60 bg-ink-900/50 px-4 py-2.5">
+        {!approved ? (
+          <>
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/40 bg-amber-500/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-amber-300">
+              ✎ Draft
+            </span>
+            <span className="text-xs text-slate-400">
+              Inspect &amp; amend — drag to arrange, drag handle-to-handle to link, click a stage to edit, ⌫ to delete.
+            </span>
+            <div className="ml-auto flex items-center gap-2">
+              <button
+                type="button"
+                onClick={addStage}
+                className="rounded-lg border border-slate-500/60 bg-slate-700/40 px-3 py-1.5 text-sm font-medium text-slate-100 transition hover:bg-slate-600/50"
+              >
+                + Add stage
+              </button>
+              <button
+                type="button"
+                onClick={approve}
+                disabled={nodes.length === 0}
+                className="rounded-lg bg-emerald-600 px-4 py-1.5 text-sm font-semibold text-white shadow-lg shadow-emerald-900/40 transition hover:bg-emerald-500 disabled:opacity-40"
+              >
+                ✓ Approve plan
+              </button>
+            </div>
+          </>
+        ) : (
+          <>
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-emerald-300">
+              ✓ Approved
+            </span>
+            <span className="text-xs text-slate-400">Click a stage to open its cockpit and work the sub-change.</span>
+            <div className="ml-auto flex items-center gap-3">
+              <div className="hidden items-center gap-2 sm:flex">
+                <div className="h-2 w-40 overflow-hidden rounded-full bg-slate-700/50">
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-emerald-400 transition-all"
+                    style={{ width: `${pct}%` }}
+                  />
+                </div>
+                <span className="text-xs font-medium text-slate-300">
+                  <span className="text-emerald-300">{done}</span> of {total} done
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => onReopen && onReopen()}
+                className="rounded-lg border border-slate-500/60 bg-slate-700/40 px-3 py-1.5 text-sm font-medium text-slate-100 transition hover:bg-slate-600/50"
+              >
+                ✎ Edit plan
+              </button>
+            </div>
+          </>
+        )}
+      </div>
 
       {/* DAG canvas */}
       <div className="relative h-[600px] overflow-hidden rounded-2xl border border-slate-700/60 bg-ink-950/40 shadow-inner">
         <ReactFlow
-          // Remount per plan: React Flow's fitView only runs on initial mount, so a newly
-          // generated plan would otherwise render unfitted (and unmeasured). Keying on the plan
-          // identity + shape forces a fresh measure + fitView whenever the decomposition changes.
-          key={`${programme.id}:${programme.nodes.length}:${programme.source || "seed"}`}
+          key={`${programme.id}:${programme.source || "seed"}`}
           nodes={nodes}
-          edges={rfEdges}
+          edges={edges}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          onConnect={onConnect}
+          isValidConnection={isValidConnection}
           nodeTypes={nodeTypes}
-          onNodeClick={(_, node) => onOpenNode && onOpenNode(node.id)}
+          onNodeClick={onNodeClick}
+          onPaneClick={() => setSelectedId(null)}
           fitView
           fitViewOptions={{ padding: 0.18 }}
-          nodesDraggable={false}
-          nodesConnectable={false}
+          nodesDraggable={!approved}
+          nodesConnectable={!approved}
           elementsSelectable
+          deleteKeyCode={approved ? null : ["Backspace", "Delete"]}
           minZoom={0.3}
           proOptions={{ hideAttribution: false }}
         >
           <Background color="#1e293b" gap={22} size={1} />
           <Controls showInteractive={false} />
         </ReactFlow>
+
+        {/* Edge legend */}
+        <div className="pointer-events-none absolute bottom-3 left-3 flex flex-col gap-1 rounded-lg border border-slate-700/60 bg-ink-900/80 px-2.5 py-1.5 text-[10px] text-slate-400 backdrop-blur-sm">
+          <span className="flex items-center gap-1.5">
+            <span className="inline-block h-0.5 w-5 bg-emerald-500" /> verified dependency (parsed)
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="inline-block h-0.5 w-5 border-t border-dashed border-amber-500" /> inferred (LLM / manual)
+          </span>
+        </div>
+
+        {/* Edit panel (draft, node selected) */}
+        {!approved && selectedNode && (
+          <div className="absolute right-3 top-3 w-72 rounded-xl border border-slate-600/60 bg-ink-900/95 p-3 shadow-2xl backdrop-blur-sm">
+            <div className="mb-2 flex items-center justify-between">
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Edit stage</span>
+              <button
+                type="button"
+                onClick={() => setSelectedId(null)}
+                className="rounded px-1.5 text-slate-500 hover:text-slate-300"
+              >
+                ✕
+              </button>
+            </div>
+            <label className="mb-1 block text-[10px] uppercase tracking-wider text-slate-500">Label</label>
+            <input
+              value={selectedNode.data.label}
+              onChange={(e) => updateSelected({ label: e.target.value })}
+              className="mb-2 w-full rounded-md border border-slate-600/60 bg-ink-950/70 px-2 py-1.5 text-sm text-slate-100 outline-none focus:border-indigo-500/70"
+            />
+            <label className="mb-1 block text-[10px] uppercase tracking-wider text-slate-500">Change request</label>
+            <textarea
+              value={selectedNode.data.changeRequest}
+              onChange={(e) => updateSelected({ changeRequest: e.target.value })}
+              className="mb-2 h-24 w-full resize-y rounded-md border border-slate-600/60 bg-ink-950/70 px-2 py-1.5 text-[13px] leading-relaxed text-slate-200 outline-none focus:border-indigo-500/70"
+            />
+            <label className="mb-1 block text-[10px] uppercase tracking-wider text-slate-500">
+              Edit sites (comma-separated)
+            </label>
+            <input
+              value={(selectedNode.data.editSites || []).join(", ")}
+              onChange={(e) =>
+                updateSelected({ editSites: e.target.value.split(",").map((s) => s.trim().toUpperCase()).filter(Boolean) })
+              }
+              className="mb-3 w-full rounded-md border border-slate-600/60 bg-ink-950/70 px-2 py-1.5 font-mono text-[12px] text-slate-200 outline-none focus:border-indigo-500/70"
+            />
+            <button
+              type="button"
+              onClick={deleteSelected}
+              className="w-full rounded-md border border-rose-500/50 bg-rose-500/10 px-2 py-1.5 text-sm font-medium text-rose-200 transition hover:bg-rose-500/20"
+            >
+              ⌫ Delete stage
+            </button>
+          </div>
+        )}
+
         {generating && (
           <div className="absolute inset-0 flex items-center justify-center bg-ink-950/50 backdrop-blur-[1px]">
             <div className="flex items-center gap-2 rounded-lg border border-slate-700/60 bg-ink-900/90 px-4 py-2 text-sm text-slate-200">
@@ -160,7 +380,9 @@ export default function ProgrammeCanvas({
         )}
       </div>
       <p className="mt-2 text-center text-[11px] text-slate-500">
-        Click any stage to open its cockpit — Locate → Explain → Impact → Propose → Record, scoped to that sub-change.
+        {approved
+          ? "Approved — click any stage to open its cockpit (Locate → Explain → Impact → Propose → Record)."
+          : "Draft — nothing runs until you approve. Amend the decomposition, then Approve plan to lock it and begin."}
       </p>
     </div>
   );

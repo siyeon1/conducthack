@@ -63,35 +63,49 @@ const NODE_H = 76;
 // Run dagre over the plan and return React-Flow-shaped nodes/edges. React Flow ships no layout,
 // and the plan carries no coordinates, so we compute them here. Re-run whenever the plan changes.
 export function layoutProgramme(programme, statuses = {}, direction = "LR") {
-  const g = new dagre.graphlib.Graph();
-  g.setDefaultEdgeLabel(() => ({}));
-  g.setGraph({ rankdir: direction, nodesep: 48, ranksep: 90, marginx: 16, marginy: 16 });
+  const nodesIn = programme.nodes || [];
+  const edgesIn = programme.edges || [];
 
-  programme.nodes.forEach((n) => g.setNode(n.id, { width: NODE_W, height: NODE_H }));
-  programme.edges.forEach((e) => g.setEdge(e.source, e.target));
-  dagre.layout(g);
+  // Use saved positions when every node has one (after an edit/drag/approve); otherwise dagre.
+  const allPositioned =
+    nodesIn.length > 0 &&
+    nodesIn.every((n) => n.position && Number.isFinite(n.position.x) && Number.isFinite(n.position.y));
 
-  const nodes = programme.nodes.map((n) => {
-    const p = g.node(n.id);
-    return {
-      id: n.id,
-      type: "stage",
+  const posById = {};
+  if (allPositioned) {
+    for (const n of nodesIn) posById[n.id] = { x: n.position.x, y: n.position.y };
+  } else {
+    const g = new dagre.graphlib.Graph();
+    g.setDefaultEdgeLabel(() => ({}));
+    g.setGraph({ rankdir: direction, nodesep: 48, ranksep: 90, marginx: 16, marginy: 16 });
+    nodesIn.forEach((n) => g.setNode(n.id, { width: NODE_W, height: NODE_H }));
+    edgesIn.forEach((e) => g.setEdge(e.source, e.target));
+    dagre.layout(g);
+    for (const n of nodesIn) {
+      const p = g.node(n.id);
       // dagre anchors at the node CENTER; React Flow anchors at the TOP-LEFT.
-      position: { x: p.x - NODE_W / 2, y: p.y - NODE_H / 2 },
-      data: {
-        label: n.label,
-        status: statuses[n.id] || "pending",
-        editSites: n.edit_sites || [],
-      },
-    };
-  });
+      posById[n.id] = { x: p.x - NODE_W / 2, y: p.y - NODE_H / 2 };
+    }
+  }
 
-  const edges = programme.edges.map((e, i) => ({
-    id: `e-${e.source}-${e.target}-${i}`,
+  const nodes = nodesIn.map((n) => ({
+    id: n.id,
+    type: "stage",
+    position: posById[n.id],
+    data: {
+      label: n.label,
+      status: statuses[n.id] || "pending",
+      editSites: n.edit_sites || [],
+      changeRequest: n.change_request || "",
+    },
+  }));
+
+  const edges = edgesIn.map((e, i) => ({
+    id: e.id || `e-${e.source}-${e.target}-${i}`,
     source: e.source,
     target: e.target,
     label: e.reason,
-    data: { verified: e.verified },
+    data: { verified: !!e.verified },
   }));
 
   return { nodes, edges };

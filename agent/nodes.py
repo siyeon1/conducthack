@@ -312,6 +312,29 @@ def _planner_provider():
     return _PLANNER_PROVIDER
 
 
+def _ground_plan_edges(nodes: list[dict], edges: list[dict]) -> list[dict]:
+    """Tag each plan edge `verified` when the two sub-changes' edit sites are actually coupled in
+    the PARSED dependency graph (a real COPY/CALL/… edge), vs `verified: False` for an LLM-inferred
+    ordering with no parsed dependency. The 'parse, don't infer' differentiator, applied to the
+    Level-1 decomposition edges."""
+    g = _full_graph()
+    dep: set = set()
+    for e in g.get("edges", []):
+        a = str(e.get("frm", "")).upper()
+        b = str(e.get("to", "")).upper()
+        if a and b:
+            dep.add((a, b))
+            dep.add((b, a))
+    sites = {n["id"]: {str(s).upper() for s in n.get("edit_sites", [])} for n in nodes}
+    out = []
+    for e in edges:
+        ss = sites.get(e["source"], set())
+        ts = sites.get(e["target"], set())
+        verified = any((a, b) in dep for a in ss for b in ts)
+        out.append({**e, "verified": bool(verified)})
+    return out
+
+
 async def generate_programme(change_request: str) -> dict:
     """Decompose a change request into a validated DAG programme. Never raises — on ANY failure
     (provider error, empty/invalid plan) it returns the canned fallback so the canvas always
@@ -350,12 +373,13 @@ async def generate_programme(change_request: str) -> dict:
             "title": cr or fixtures.FALLBACK_PROGRAMME["title"],
             "subtitle": "Decomposed by the planner into dependent, individually-reviewable sub-changes.",
             "nodes": clean["nodes"],
-            "edges": clean["edges"],
+            "edges": _ground_plan_edges(clean["nodes"], clean["edges"]),
             "source": "llm",
         }
     except Exception as exc:
         fb = dict(fixtures.FALLBACK_PROGRAMME)
         fb["title"] = cr or fb["title"]
+        fb["edges"] = _ground_plan_edges(fb["nodes"], fb["edges"])
         fb["source"] = "fallback"
         fb["detail"] = str(exc)
         return fb
