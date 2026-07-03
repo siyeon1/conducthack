@@ -3,11 +3,11 @@ import { Handle, Position } from "@xyflow/react";
 // Custom React Flow node for a Level-1 sub-change. Border colour + badge encode status
 // (Airflow border-colour convention + Linear status tokens). Click is handled by the canvas.
 const STYLES = {
-  pending: { ring: "border-slate-600/70", dot: "bg-slate-500", label: "Pending", tint: "text-slate-400" },
-  in_progress: { ring: "border-sky-500/80 shadow-sky-900/30", dot: "bg-sky-400 animate-pulse", label: "In progress", tint: "text-sky-300" },
-  awaiting_approval: { ring: "border-amber-500/80 shadow-amber-900/30", dot: "bg-amber-400 animate-pulse", label: "Awaiting approval", tint: "text-amber-300" },
-  done: { ring: "border-emerald-500/80 shadow-emerald-900/30", dot: "bg-emerald-400", label: "Done", tint: "text-emerald-300" },
-  blocked: { ring: "border-rose-500/80", dot: "bg-rose-400", label: "Blocked", tint: "text-rose-300" },
+  pending: { ring: "border-slate-600/70", dot: "bg-slate-500", label: "Pending", tint: "text-slate-400", icon: "" },
+  in_progress: { ring: "border-sky-500/80 shadow-sky-900/30", dot: "bg-sky-400 animate-pulse", label: "In progress", tint: "text-sky-300", icon: "" },
+  awaiting_approval: { ring: "border-amber-500/80 shadow-amber-900/30", dot: "bg-amber-400 animate-pulse", label: "Awaiting approval", tint: "text-amber-300", icon: "✋" },
+  done: { ring: "border-emerald-500/80 shadow-emerald-900/30", dot: "bg-emerald-400", label: "Done", tint: "text-emerald-300", icon: "✓" },
+  blocked: { ring: "border-rose-500/80", dot: "bg-rose-400", label: "Blocked", tint: "text-rose-300", icon: "⚠" },
 };
 
 export default function StatusNode({ data }) {
@@ -22,7 +22,7 @@ export default function StatusNode({ data }) {
         <span className="flex-1 text-[13px] font-semibold leading-snug text-slate-100">
           {data.label}
         </span>
-        {data.status === "done" && <span className="text-sm text-emerald-400">✓</span>}
+        {s.icon && <span className={`text-sm ${s.tint}`}>{s.icon}</span>}
       </div>
       <div className="mt-1.5 flex items-center justify-between gap-2">
         <span className={`text-[10px] font-medium uppercase tracking-wider ${s.tint}`}>{s.label}</span>

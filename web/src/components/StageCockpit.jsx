@@ -57,7 +57,7 @@ const EMPTY_CELL = { status: "pending", payload: {}, citations: [] };
 // Level-2 — the Stage cockpit. The 5-cell flow (Locate → Explain → Impact → Propose → Record)
 // scoped to a single sub-change from the Level-1 DAG. Manages its own session; reports derived
 // status up so the Level-1 node lights as work progresses. Mounted keyed by node id (fresh per node).
-export default function StageCockpit({ node, onBack, onStatusChange }) {
+export default function StageCockpit({ node, onBack, onStatusChange, onRecorded }) {
   const [sessionId, setSessionId] = useState(null);
   const [state, setState] = useState(null);
   const [running, setRunning] = useState({}); // cell -> bool
@@ -187,6 +187,12 @@ export default function StageCockpit({ node, onBack, onStatusChange }) {
     if (onStatusChange) onStatusChange(derivedStatus);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [derivedStatus]);
+
+  // Lift the recorded, hash-chained ledger entry up to the programme-level audit trail.
+  useEffect(() => {
+    if (recordEntry && onRecorded) onRecorded(recordEntry);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [recordEntry && recordEntry.entry_hash]);
 
   return (
     <div className="mx-auto min-h-full max-w-5xl px-4 pb-20 pt-6 sm:px-6">

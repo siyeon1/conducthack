@@ -10,6 +10,7 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import StatusNode from "./StatusNode.jsx";
+import ProgrammeLedger from "./ProgrammeLedger.jsx";
 import { layoutProgramme } from "../programme.js";
 
 const nodeTypes = { stage: StatusNode };
@@ -38,14 +39,20 @@ export default function ProgrammeCanvas({
   programme,
   statuses = {},
   approved = false,
+  ledger = [],
+  library = [],
   onOpenNode,
   onGenerate,
   generating = false,
   planError = null,
   onApprove,
   onReopen,
+  onSave,
+  onLoad,
+  onDeleteSaved,
 }) {
   const [req, setReq] = useState(programme.title || "");
+  const [showLibrary, setShowLibrary] = useState(false);
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [selectedId, setSelectedId] = useState(null);
@@ -146,6 +153,20 @@ export default function ProgrammeCanvas({
     onApprove && onApprove({ ...programme, nodes: pnodes, edges: pedges });
   };
 
+  // Keyboard: ⌘/Ctrl+Enter approves the plan while in draft (Linear-style speed).
+  useEffect(() => {
+    if (approved) return undefined;
+    const onKey = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "Enter" && nodes.length) {
+        e.preventDefault();
+        approve();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [approved, nodes, edges]);
+
   const total = nodes.length;
   const done = nodes.filter((n) => (n.data.status || "pending") === "done").length;
   const pct = total ? Math.round((done / total) * 100) : 0;
@@ -173,6 +194,62 @@ export default function ProgrammeCanvas({
                 A big compliance change, broken into reviewable sub-changes you approve one at a time.
               </p>
             </div>
+          </div>
+
+          <div className="relative flex items-center gap-2">
+            <button
+              type="button"
+              onClick={onSave}
+              title="Save this programme (plan + progress) to your library"
+              className="rounded-lg border border-slate-600/60 bg-ink-900/60 px-3 py-1.5 text-sm font-medium text-slate-200 transition hover:bg-slate-700/50"
+            >
+              💾 Save
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowLibrary((v) => !v)}
+              className="rounded-lg border border-slate-600/60 bg-ink-900/60 px-3 py-1.5 text-sm font-medium text-slate-200 transition hover:bg-slate-700/50"
+            >
+              📚 Library{library.length ? ` (${library.length})` : ""}
+            </button>
+            {showLibrary && (
+              <div className="absolute right-0 top-11 z-20 w-80 rounded-xl border border-slate-600/60 bg-ink-900/95 p-2 shadow-2xl backdrop-blur-sm">
+                {library.length === 0 ? (
+                  <div className="px-2 py-3 text-center text-xs text-slate-500">
+                    No saved programmes yet. “Save” keeps the current plan + progress + audit trail.
+                  </div>
+                ) : (
+                  <ul className="max-h-72 space-y-1 overflow-y-auto">
+                    {library.map((it) => (
+                      <li key={it.savedAt} className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-slate-800/60">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            onLoad && onLoad(it);
+                            setShowLibrary(false);
+                          }}
+                          className="min-w-0 flex-1 text-left"
+                        >
+                          <div className="truncate text-sm text-slate-200">{it.title}</div>
+                          <div className="text-[10px] text-slate-500">
+                            {it.source === "llm" ? "generated" : it.source === "fallback" ? "fallback" : "seed"} ·{" "}
+                            {new Date(it.savedAt).toLocaleString()}
+                          </div>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => onDeleteSaved && onDeleteSaved(it.savedAt)}
+                          title="Delete"
+                          className="rounded px-1.5 text-slate-500 transition hover:text-rose-300"
+                        >
+                          ✕
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
@@ -382,8 +459,10 @@ export default function ProgrammeCanvas({
       <p className="mt-2 text-center text-[11px] text-slate-500">
         {approved
           ? "Approved — click any stage to open its cockpit (Locate → Explain → Impact → Propose → Record)."
-          : "Draft — nothing runs until you approve. Amend the decomposition, then Approve plan to lock it and begin."}
+          : "Draft — nothing runs until you approve. Amend the decomposition, then Approve plan (⌘/Ctrl+Enter) to lock it and begin."}
       </p>
+
+      <ProgrammeLedger entries={ledger} />
     </div>
   );
 }

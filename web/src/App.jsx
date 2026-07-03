@@ -1,13 +1,14 @@
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import ProgrammeCanvas from "./components/ProgrammeCanvas.jsx";
 import StageCockpit from "./components/StageCockpit.jsx";
 import { FCA_PROGRAMME } from "./programme.js";
 import { generatePlan } from "./api.js";
+import { listLibrary, saveToLibrary, deleteFromLibrary } from "./library.js";
 
 // Two-level shell: Level-1 Change Programme canvas (the decomposition DAG) ⇄ Level-2 Stage cockpit
 // (the existing 5-cell flow, scoped to one sub-change). The plan is a DRAFT until approved; only an
-// approved plan unlocks execution (opening a node's cockpit). The shell owns the programme, whether
-// it's approved, which node is open, and each node's status.
+// approved plan unlocks execution. The shell owns the programme, whether it's approved, which node
+// is open, each node's status, the programme-level audit trail, and the saved-programme library.
 export default function App() {
   const [programme, setProgramme] = useState(FCA_PROGRAMME);
   const [approved, setApproved] = useState(false); // the plan gate: draft → approved
@@ -15,6 +16,8 @@ export default function App() {
   const [activeNodeId, setActiveNodeId] = useState(null);
   const [generating, setGenerating] = useState(false);
   const [planError, setPlanError] = useState(null);
+  const [ledger, setLedger] = useState({}); // nodeId -> recorded hash-chained entry
+  const [library, setLibrary] = useState(() => listLibrary());
 
   const activeNode = programme.nodes.find((n) => n.id === activeNodeId) || null;
 
@@ -38,6 +41,7 @@ export default function App() {
         setProgramme(prog);
         setStatuses({}); // a new plan starts fresh…
         setApproved(false); // …and unapproved (draft)
+        setLedger({}); // …with an empty audit trail
         setActiveNodeId(null);
       } else {
         setPlanError({ error: "Planner returned an empty plan." });
@@ -60,6 +64,39 @@ export default function App() {
     setActiveNodeId(null);
   }, []);
 
+  // ---- library ----
+  const handleSave = useCallback(() => {
+    const item = {
+      savedAt: Date.now(),
+      title: programme.title,
+      source: programme.source,
+      programme,
+      statuses,
+      approved,
+      ledger,
+    };
+    setLibrary(saveToLibrary(item));
+  }, [programme, statuses, approved, ledger]);
+
+  const handleLoad = useCallback((item) => {
+    if (!item || !item.programme) return;
+    setProgramme(item.programme);
+    setStatuses(item.statuses || {});
+    setApproved(!!item.approved);
+    setLedger(item.ledger || {});
+    setActiveNodeId(null);
+  }, []);
+
+  const handleDeleteSaved = useCallback((savedAt) => {
+    setLibrary(deleteFromLibrary(savedAt));
+  }, []);
+
+  // Ordered programme audit trail (plan order), only the recorded stages.
+  const ledgerEntries = useMemo(
+    () => programme.nodes.map((n) => ledger[n.id]).filter(Boolean),
+    [programme, ledger]
+  );
+
   // Only an approved plan can open a cockpit.
   if (activeNode && approved) {
     return (
@@ -68,6 +105,9 @@ export default function App() {
         node={activeNode}
         onBack={() => setActiveNodeId(null)}
         onStatusChange={(status) => setNodeStatus(activeNode.id, status)}
+        onRecorded={(entry) =>
+          setLedger((prev) => ({ ...prev, [activeNode.id]: { nodeId: activeNode.id, label: activeNode.label, entry } }))
+        }
       />
     );
   }
@@ -77,12 +117,17 @@ export default function App() {
       programme={programme}
       statuses={statuses}
       approved={approved}
+      ledger={ledgerEntries}
+      library={library}
       onOpenNode={(id) => setActiveNodeId(id)}
       onGenerate={handleGenerate}
       generating={generating}
       planError={planError}
       onApprove={handleApprove}
       onReopen={handleReopen}
+      onSave={handleSave}
+      onLoad={handleLoad}
+      onDeleteSaved={handleDeleteSaved}
     />
   );
 }
