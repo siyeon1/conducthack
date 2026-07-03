@@ -25,7 +25,9 @@ import {
 
 const RAW_MOCK = import.meta.env.VITE_USE_MOCK;
 export const USE_MOCK = RAW_MOCK === undefined ? true : String(RAW_MOCK) !== "false";
-export const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8000";
+// Default to 127.0.0.1 (not `localhost`): uvicorn binds IPv4, and a browser that resolves
+// `localhost` to IPv6 [::1] would otherwise fail every API call with a network error.
+export const API_BASE = import.meta.env.VITE_API_BASE || "http://127.0.0.1:8000";
 
 const clone = (o) => JSON.parse(JSON.stringify(o));
 const delay = (ms) => new Promise((r) => setTimeout(r, ms));
