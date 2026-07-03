@@ -124,11 +124,23 @@ def _known(name: str) -> bool:
     return base in c.programs or base in c.copybooks
 
 
-def _validate_programs(programs: list[dict]) -> list[dict]:
-    """L8: a program that isn't in the corpus cannot be 'verified' — downgrade its flag."""
+def _validate_programs(programs: list) -> list[dict]:
+    """L8 + real-LLM robustness: downgrade `verified` for programs not in the corpus, coerce
+    stray string items to dicts, and de-duplicate by program name (a real model repeats programs
+    and occasionally emits a bare string — neither must crash the cell or clutter the list)."""
     out = []
+    seen: set[str] = set()
     for p in programs:
-        p = dict(p)
+        if isinstance(p, str):
+            p = {"program": p, "file": "", "reason": "", "verified": False}
+        elif isinstance(p, dict):
+            p = dict(p)
+        else:
+            continue
+        name = (p.get("program", "") or "").split(" ")[0].upper()
+        if not name or name in seen:
+            continue
+        seen.add(name)
         if not _known(p.get("program", "")):
             p["verified"] = False
         out.append(p)
@@ -185,6 +197,24 @@ async def locate_node(state: GraphState) -> dict:
     return {**updates, **_merge_cell(state, "locate", result)}
 
 
+def _validate_idioms(payload: dict) -> dict:
+    """Real-LLM robustness: guarantee plain_english is a str and cobol_idioms is a list of
+    {snippet, explanation} dicts. A real model sometimes returns cobol_idioms as one long string
+    instead of a list — the UI does cobol_idioms.map(), so a non-list would break the cell."""
+    payload = dict(payload)
+    payload["plain_english"] = str(payload.get("plain_english") or "")
+    clean = []
+    idioms = payload.get("cobol_idioms")
+    if isinstance(idioms, list):
+        for it in idioms:
+            if isinstance(it, dict):
+                clean.append({"snippet": str(it.get("snippet", "")), "explanation": str(it.get("explanation", ""))})
+            elif isinstance(it, str) and it.strip():
+                clean.append({"snippet": "", "explanation": it})
+    payload["cobol_idioms"] = clean
+    return payload
+
+
 async def explain_node(state: GraphState) -> dict:
     updates = await _ensure_routed(state)
     program = (state.get("selected_program") or "").upper() or _first_located_program(state) or DEFAULT_EDIT_SITE
@@ -193,6 +223,7 @@ async def explain_node(state: GraphState) -> dict:
     user = f"Program: {program}\nFile: {unit.file if unit else '?'}\n\nSource (may be truncated):\n{source}"
     try:
         payload = await _structured(prompts.EXPLAIN_SYSTEM, user, prompts.ExplainPayload, max_tokens=2500)
+        payload = _validate_idioms(payload)
         cits = [{"program": program, "file": unit.file if unit else "", "lines": None, "verified": bool(unit)}]
         result = _cell(
             "explain", "done", f"Plain-English explanation of **{program}**.",
@@ -209,10 +240,19 @@ def _validate_affected(affected: list[dict], sub: dict) -> list[dict]:
     is NOT in the graph is flagged `in_graph=False` so it is never shown as a proven dependency."""
     node_set = {n.upper() for n in sub.get("nodes", [])}
     out = []
+    seen: set[str] = set()
     for item in affected:
-        item = dict(item)
-        raw = (item.get("program", "") or "").upper().replace("/", " ")
-        toks = [t.strip("()") for t in raw.split()]
+        if isinstance(item, str):
+            item = {"program": item, "relationship": "", "risk": "low"}
+        elif isinstance(item, dict):
+            item = dict(item)
+        else:
+            continue
+        prog = (item.get("program", "") or "").strip()
+        if not prog or prog.upper() in seen:
+            continue
+        seen.add(prog.upper())
+        toks = [t.strip("()") for t in prog.upper().replace("/", " ").split()]
         item["in_graph"] = any(t in node_set for t in toks)
         out.append(item)
     return out
@@ -291,7 +331,7 @@ async def propose_node(state: GraphState) -> dict:
             "propose", "awaiting_approval",
             f"Proposed a change to **{program}** — awaiting your approval.",
             citations=[{"program": program, "file": unit.file if unit else "", "lines": None, "verified": bool(unit)}],
-            payload={"explanation": payload.get("explanation", "")},
+            payload={"explanation": str(payload.get("explanation") or "")},
             proposed_diff=diff,
         )
         return {"proposed_diff": diff, **_merge_cell(state, "propose", result)}
