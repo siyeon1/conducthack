@@ -10,8 +10,9 @@ the UI/cells stay untouched when inferred edges become verified.
 A lightweight, honest static extractor (T2.1 — a "lightweight static extractor", not a full grammar):
   * COPY edges     → parsed from `COPY <name>`                          → verified=True
   * CALL edges     → parsed from static `CALL '<name>'`                 → verified=True
-  * CICS LINK/XCTL → parsed from `... LINK|XCTL ... PROGRAM('<name>')`   → verified=True
-  * other PROGRAM()→ e.g. HANDLE ABEND — a real reference, not a call    → verified=False (inferred)
+  * CICS LINK/XCTL → parsed from `... LINK|XCTL ... PROGRAM('<name>')` AND data-name dispatch
+                     `PROGRAM(<name>)` resolved via VALUE/MOVE bindings           → verified=True
+  * other PROGRAM()→ e.g. HANDLE ABEND, or an ambiguous/unresolved data-name      → verified=False
   * WRITES edges   → heuristic (WRITE-TO-<copybook> / SQL INSERT INTO)   → verified=False (inferred)
   * data items     → 01–49/77 names + PIC via build_field_index()        → deterministic field grounding
 Comment lines (indicator column 7 == '*') are skipped. Self-loops are dropped.
@@ -22,9 +23,14 @@ import re
 
 from analysis.corpus import Corpus, load_corpus
 
-_COPY_RE = re.compile(r"^\s*COPY\s+([A-Z0-9][A-Z0-9-]*)", re.IGNORECASE)
+_COPY_RE = re.compile(r"""^\s*COPY\s+['"]?([A-Z0-9][A-Z0-9-]*)""", re.IGNORECASE)
 _CALL_RE = re.compile(r"""\bCALL\s+['"]([A-Z0-9][A-Z0-9-]*)['"]""", re.IGNORECASE)
-_PROGRAM_RE = re.compile(r"""PROGRAM\(\s*['"]([A-Z0-9][A-Z0-9-]*)['"]\s*\)""", re.IGNORECASE)
+_PROGRAM_RE = re.compile(r"""PROGRAM\(\s*['"]([A-Z0-9][A-Z0-9-]*)['"]""", re.IGNORECASE)
+# Unquoted PROGRAM(data-name): CBSA dispatches CICS via a data-name whose VALUE/MOVE binds it
+# to a program literal (e.g. PROGRAM(WS-ABEND-PGM) with WS-ABEND-PGM VALUE 'ABNDPROC'). Resolved below.
+_PROGRAM_VAR_RE = re.compile(r"""PROGRAM\(\s*([A-Z0-9][A-Z0-9-]*)""", re.IGNORECASE)
+_VALUE_BIND_RE = re.compile(r"""\b([A-Z0-9][A-Z0-9-]*)\s+PIC\s+X\(\d+\)[^.]*?VALUE\s+(?:IS\s+)?['"]([A-Z0-9][A-Z0-9-]*)['"]""", re.IGNORECASE)
+_MOVE_BIND_RE = re.compile(r"""\bMOVE\s+['"]([A-Z0-9][A-Z0-9-]*)['"]\s+TO\s+([A-Z0-9][A-Z0-9-]*)""", re.IGNORECASE)
 _INSERT_RE = re.compile(r"\bINSERT\s+INTO\s+([A-Z0-9][A-Z0-9-]*)", re.IGNORECASE)
 _WRITE_SECT_RE = re.compile(r"\bWRITE-TO-([A-Z0-9][A-Z0-9-]*)", re.IGNORECASE)
 _DATA_ITEM_RE = re.compile(r"^\s*(0[1-9]|[1-4][0-9]|77)\s+([A-Z0-9][A-Z0-9-]*)", re.IGNORECASE)
@@ -56,6 +62,14 @@ def _edge(frm: str, to: str, kind: str, verified: bool) -> dict:
     return {"frm": frm.upper(), "to": to.upper(), "kind": kind, "verified": verified}
 
 
+def _cics_transfer(blob: str, pos: int) -> bool:
+    """True if the PROGRAM(...) at `pos` sits inside an EXEC CICS LINK/XCTL statement (a real
+    control transfer). Scans back to the enclosing EXEC so multi-line EXEC blocks still resolve."""
+    start = blob.rfind("EXEC", max(0, pos - 400), pos)
+    ctx = (blob[start:pos] if start != -1 else blob[max(0, pos - 60):pos]).upper()
+    return "LINK" in ctx or "XCTL" in ctx
+
+
 def graph_from_corpus(corpus: Corpus) -> dict:
     """Build the full dependency graph from an already-loaded Corpus."""
     known = set(corpus.programs) | set(corpus.copybooks)
@@ -73,16 +87,31 @@ def graph_from_corpus(corpus: Corpus) -> dict:
         for m in _CALL_RE.finditer(blob):
             edges.append(_edge(prog.name, m.group(1), "CALL", True))
 
-        # CICS transfers: PROGRAM('X') naming another known program. A LINK/XCTL in the
-        # immediate context is a deterministic static parse → verified; other PROGRAM(...)
-        # uses (e.g. HANDLE ABEND) are real references but not calls → inferred. (T2.1:
-        # swap inferred->verified where proven.)
-        for m in _PROGRAM_RE.finditer(blob):
+        # program-name bindings: data-name -> known program literal(s), from VALUE clauses and
+        # MOVE 'LIT' TO <name>. Lets us resolve PROGRAM(<data-name>) dispatch (the CBSA norm).
+        bindings: dict[str, set[str]] = {}
+        for m in _VALUE_BIND_RE.finditer(blob):
+            lit = m.group(2).upper()
+            if lit in corpus.programs:
+                bindings.setdefault(m.group(1).upper(), set()).add(lit)
+        for m in _MOVE_BIND_RE.finditer(blob):
+            lit = m.group(1).upper()
+            if lit in corpus.programs:
+                bindings.setdefault(m.group(2).upper(), set()).add(lit)
+
+        # CICS transfers. PROGRAM('LIT') and PROGRAM(<data-name>) both count; a LINK/XCTL in the
+        # enclosing EXEC block => verified; other PROGRAM() refs (e.g. HANDLE ABEND) => inferred.
+        for m in _PROGRAM_RE.finditer(blob):  # quoted literal
             target = m.group(1).upper()
             if target in corpus.programs and target != prog.name:
-                ctx = blob[max(0, m.start() - 40) : m.start()].upper()
-                verified = ("LINK" in ctx) or ("XCTL" in ctx)
-                edges.append(_edge(prog.name, target, "CALL", verified))
+                edges.append(_edge(prog.name, target, "CALL", _cics_transfer(blob, m.start())))
+        for m in _PROGRAM_VAR_RE.finditer(blob):  # unquoted data-name (or bare literal)
+            tok = m.group(1).upper()
+            targets = bindings.get(tok) or ({tok} if tok in corpus.programs else set())
+            resolvable = len(targets) == 1  # a single unambiguous binding is a verifiable target
+            for target in targets:
+                if target != prog.name:
+                    edges.append(_edge(prog.name, target, "CALL", _cics_transfer(blob, m.start()) and resolvable))
 
         # WRITES: heuristic — a WRITE-TO-<X> section or SQL INSERT INTO <X> naming a copybook.
         for m in list(_WRITE_SECT_RE.finditer(blob)) + list(_INSERT_RE.finditer(blob)):
