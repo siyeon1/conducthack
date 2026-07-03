@@ -54,6 +54,24 @@ class ProposePayload(BaseModel):
     diff: str = Field(description="A unified diff (---/+++/@@) implementing the minimal change")
 
 
+class PlanNode(BaseModel):
+    id: str = Field(description="short stable kebab-case slug id, e.g. 'acct-field'")
+    label: str = Field(description="short imperative title of this sub-change")
+    change_request: str = Field(description="a self-contained change request for THIS sub-change, runnable on its own")
+    edit_sites: list[str] = Field(description="the COBOL program/copybook names this sub-change edits, taken from the inventory")
+
+
+class PlanEdge(BaseModel):
+    source: str = Field(description="id of the prerequisite sub-change")
+    target: str = Field(description="id of the sub-change that depends on it (done AFTER source)")
+    reason: str = Field(description="the concrete COBOL dependency: why target depends on source")
+
+
+class PlanPayload(BaseModel):
+    nodes: list[PlanNode]
+    edges: list[PlanEdge]
+
+
 # --------------------------------------------------------------------------- #
 # System prompts                                                              #
 # --------------------------------------------------------------------------- #
@@ -97,3 +115,17 @@ Output a unified diff (---/+++/@@ hunks) touching as little as possible, plus a 
 explanation. Mirror existing patterns in the code (e.g. an existing guard's fail-code style). Do NOT \
 apply anything — this is a PROPOSAL a human will approve, edit, or reject. Keep copybook/interface \
 changes out unless strictly required."""
+
+PLAN_SYSTEM = """You decompose a large COBOL change request into a SMALL DAG of dependent \
+sub-changes that a human reviews and approves one at a time (like a stack of small pull requests). \
+Given the request and the candidate program/copybook inventory:
+- Produce 4 to 6 nodes. Each node is ONE small, independently-reviewable sub-change with: a stable \
+short kebab-case id, a short imperative label, a self-contained change_request (ONE or TWO sentences — \
+concise, not a full spec), and edit_sites (the program/copybook names it touches, taken ONLY from the \
+inventory).
+- Produce edges = dependencies. An edge source->target means target must be done AFTER source \
+(e.g. add a field to a shared copybook BEFORE the programs that read it enforce it). The graph MUST \
+be acyclic.
+- Put shared data/copybook changes upstream (prerequisites); caller/screen changes downstream. Keep \
+the graph small and legible — a 3-4 node stack is ideal, never exceed 6. Use ONLY program/copybook \
+names that appear in the inventory."""

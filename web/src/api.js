@@ -22,6 +22,7 @@ import {
   mockLedgerEntry,
   freshState,
 } from "./mockState.js";
+import { FCA_PROGRAMME } from "./programme.js";
 
 const RAW_MOCK = import.meta.env.VITE_USE_MOCK;
 export const USE_MOCK = RAW_MOCK === undefined ? true : String(RAW_MOCK) !== "false";
@@ -185,6 +186,16 @@ async function mockApprove(session_id, decision, edited_diff, rationale) {
 // --------------------------------------------------------------------------- //
 // Public API                                                                  //
 // --------------------------------------------------------------------------- //
+// Level-1: decompose a change request into a DAG programme. Mock returns the canned plan
+// (titled by the request); live hits POST /plan (which self-guards to a fallback plan).
+export async function generatePlan(change_request) {
+  if (USE_MOCK) {
+    await delay(550);
+    return { ...clone(FCA_PROGRAMME), title: change_request || FCA_PROGRAMME.title, source: "llm" };
+  }
+  return apiFetch("/plan", { method: "POST", body: { change_request } });
+}
+
 export async function createSession(change_request) {
   if (USE_MOCK) {
     const session_id = `sess-${Math.random().toString(36).slice(2, 8)}`;

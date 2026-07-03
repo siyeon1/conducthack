@@ -247,6 +247,65 @@ PROPOSE_PAYLOAD = {
 }
 
 # --------------------------------------------------------------------------- #
+# PLAN — decomposition of the overdraft change into a DAG of sub-changes.      #
+# Doubles as the Stage-2 fallback (returned when live decomposition fails).    #
+# --------------------------------------------------------------------------- #
+PLAN_PAYLOAD = {
+    "nodes": [
+        {
+            "id": "acct-field",
+            "label": "Add fee-cap field to ACCOUNT copybook",
+            "change_request": "Add an overdraft fee-cap field/constant to the ACCOUNT copybook so the "
+            "debit programs can enforce a maximum overdraft fee.",
+            "edit_sites": ["ACCOUNT"],
+        },
+        {
+            "id": "xfrfun-guard",
+            "label": "Guard the debit path in XFRFUN",
+            "change_request": "Cap / add a compliant guard on overdraft fees on the debit (FROM) side of "
+            "XFRFUN before the available balance is reduced, to comply with FCA Consumer Duty.",
+            "edit_sites": ["XFRFUN"],
+        },
+        {
+            "id": "dbcrfun-guard",
+            "label": "Guard ordinary debits in DBCRFUN",
+            "change_request": "Enforce the overdraft fee cap on ordinary debits in DBCRFUN, alongside the "
+            "existing MORTGAGE/LOAN guard, to comply with FCA Consumer Duty.",
+            "edit_sites": ["DBCRFUN"],
+        },
+        {
+            "id": "proctran-audit",
+            "label": "Record capped fee in PROCTRAN audit trail",
+            "change_request": "Record the capped overdraft fee and its reason code in the PROCTRAN "
+            "transaction / audit record.",
+            "edit_sites": ["PROCTRAN"],
+        },
+        {
+            "id": "bnk1tfn-screen",
+            "label": "Surface the fail path in the BNK1TFN screen",
+            "change_request": "Surface the new overdraft-cap failure path to the user in the BNK1TFN 3270 "
+            "transfer screen.",
+            "edit_sites": ["BNK1TFN"],
+        },
+    ],
+    "edges": [
+        {"source": "acct-field", "target": "xfrfun-guard", "reason": "XFRFUN reads ACCOUNT-OVERDRAFT-LIMIT"},
+        {"source": "acct-field", "target": "dbcrfun-guard", "reason": "DBCRFUN reads the same ACCOUNT field"},
+        {"source": "xfrfun-guard", "target": "proctran-audit", "reason": "guard outcome is journalled to PROCTRAN"},
+        {"source": "dbcrfun-guard", "target": "proctran-audit", "reason": "guard outcome is journalled to PROCTRAN"},
+        {"source": "xfrfun-guard", "target": "bnk1tfn-screen", "reason": "BNK1TFN LINKs XFRFUN and surfaces its result"},
+    ],
+}
+
+FALLBACK_PROGRAMME = {
+    "id": "prog-fca-overdraft",
+    "title": "Cap overdraft fees to comply with FCA Consumer Duty",
+    "subtitle": "One compliance change, decomposed into small, dependent, individually-reviewable sub-changes.",
+    "nodes": PLAN_PAYLOAD["nodes"],
+    "edges": PLAN_PAYLOAD["edges"],
+}
+
+# --------------------------------------------------------------------------- #
 # Schema-title → canned payload (used by MockProvider).                       #
 # ExplainPayload is resolved per-program via explain_for().                   #
 # --------------------------------------------------------------------------- #
@@ -255,6 +314,7 @@ MOCK_BY_SCHEMA = {
     "LocatePayload": LOCATE_PAYLOAD,
     "ImpactPayload": IMPACT_PAYLOAD,
     "ProposePayload": PROPOSE_PAYLOAD,
+    "PlanPayload": PLAN_PAYLOAD,
     # "ExplainPayload" handled specially (needs the selected program).
 }
 

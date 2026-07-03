@@ -18,6 +18,7 @@ serialises the SessionState keys, so the contract is untouched.
 from __future__ import annotations
 
 import asyncio
+import os
 from typing import Optional
 
 from langgraph.types import interrupt
@@ -101,8 +102,8 @@ def _merge_cell(state, cell: CellName, result: CellResult) -> dict:
     return {"cells": {**state.get("cells", {}), cell: result}}
 
 
-async def _structured(system: str, user: str, model, max_tokens: int = 2000) -> dict:
-    prov = get_provider()
+async def _structured(system: str, user: str, model, max_tokens: int = 2000, provider=None) -> dict:
+    prov = provider or get_provider()
     result = await asyncio.to_thread(
         prov.complete, system, user, schema=model.model_json_schema(), max_tokens=max_tokens
     )
@@ -167,6 +168,197 @@ def _inventory() -> str:
     progs = "\n".join(f"- {u.name} ({u.file})" for u in c.programs.values())
     cpys = "\n".join(f"- {u.name} ({u.file})" for u in c.copybooks.values())
     return f"PROGRAMS:\n{progs}\n\nCOPYBOOKS:\n{cpys}"
+
+
+# --------------------------------------------------------------------------- #
+# Planner (Level-1) — decompose a change request into a validated DAG.        #
+# One-shot structured call (NOT a graph node). Forced tool use guarantees the #
+# top-level shape but NOT nested item types or acyclicity — so we coerce and  #
+# validate every plan before it can render (parse, don't trust — §14 L8).     #
+# --------------------------------------------------------------------------- #
+
+def _slug(text: str) -> str:
+    out = []
+    for ch in str(text).lower():
+        if ch.isalnum():
+            out.append(ch)
+        elif ch in " -_/":
+            out.append("-")
+    s = "".join(out).strip("-")
+    while "--" in s:
+        s = s.replace("--", "-")
+    return s[:40] or "node"
+
+
+def _coerce_to_list(val) -> list:
+    """L8: a nested array-typed field may arrive as a JSON STRING (the whole list, serialized).
+    Normalise to a list before iterating so we never split a string character-by-character."""
+    import json
+
+    if isinstance(val, list):
+        return val
+    if isinstance(val, dict):
+        return [val]
+    if isinstance(val, str):
+        s = val.strip()
+        if not s:
+            return []
+        try:
+            parsed = json.loads(s)
+        except Exception:
+            return []
+        if isinstance(parsed, list):
+            return parsed
+        if isinstance(parsed, dict):
+            return [parsed]
+    return []
+
+
+def _break_cycles(edges: list[dict]) -> list[dict]:
+    """Keep the plan a DAG: add edges one at a time, dropping any edge whose target can already
+    reach its source (which would close a cycle). Deterministic in input order."""
+    adj: dict[str, set] = {}
+    kept: list[dict] = []
+
+    def reachable(a: str, b: str) -> bool:
+        stack, seen = [a], set()
+        while stack:
+            x = stack.pop()
+            if x == b:
+                return True
+            if x in seen:
+                continue
+            seen.add(x)
+            stack.extend(adj.get(x, ()))
+        return False
+
+    for e in edges:
+        s, t = e["source"], e["target"]
+        if reachable(t, s):  # t already reaches s → s->t would create a cycle
+            continue
+        adj.setdefault(s, set()).add(t)
+        kept.append(e)
+    return kept
+
+
+def _validate_plan(payload, *, min_nodes: int = 2, max_nodes: int = 6) -> dict | None:
+    """Coerce + validate an LLM decomposition into a safe DAG. Returns {nodes, edges, trimmed}
+    or None if it can't be salvaged (caller then uses the canned fallback). Guarantees: unique
+    slug ids, referential integrity (edges reference real nodes), no self-loops, acyclic, capped."""
+    if not isinstance(payload, dict):
+        return None
+    nodes_raw = _coerce_to_list(payload.get("nodes"))
+    edges_raw = _coerce_to_list(payload.get("edges"))
+
+    nodes: list[dict] = []
+    seen: set[str] = set()
+    for n in nodes_raw:
+        if not isinstance(n, dict):
+            continue
+        label = str(n.get("label") or "").strip()
+        nid = _slug(str(n.get("id") or "").strip() or label)
+        if not nid or nid in seen:
+            continue
+        seen.add(nid)
+        sites = [str(x).strip().upper() for x in _coerce_to_list(n.get("edit_sites")) if str(x).strip()]
+        nodes.append({
+            "id": nid,
+            "label": label or nid,
+            "change_request": str(n.get("change_request") or label or nid).strip(),
+            "edit_sites": sites,
+        })
+
+    if len(nodes) < min_nodes:
+        return None
+    trimmed = len(nodes) > max_nodes
+    if trimmed:
+        nodes = nodes[:max_nodes]
+    valid = {n["id"] for n in nodes}
+
+    edges: list[dict] = []
+    eseen: set = set()
+    for e in edges_raw:
+        if not isinstance(e, dict):
+            continue
+        s = str(e.get("source") or "").strip()
+        t = str(e.get("target") or "").strip()
+        s = s if s in valid else _slug(s)
+        t = t if t in valid else _slug(t)
+        if s not in valid or t not in valid or s == t or (s, t) in eseen:
+            continue
+        eseen.add((s, t))
+        edges.append({"source": s, "target": t, "reason": str(e.get("reason") or "")})
+    edges = _break_cycles(edges)
+
+    return {"nodes": nodes, "edges": edges, "trimmed": trimmed}
+
+
+_PLANNER_PROVIDER = None
+
+
+def _planner_provider():
+    """The planner uses the strongest model. The nested plan schema (nodes + edges, two $defs)
+    trips smaller models — Sonnet intermittently emits a degenerate placeholder tool call — so the
+    Level-1 decomposition runs on Opus by default (PLAN_MODEL to override). Per-cell work stays on
+    the session's configured model. Falls back to the shared provider under USE_MOCK_LLM."""
+    global _PLANNER_PROVIDER
+    if _PLANNER_PROVIDER is None:
+        if os.getenv("USE_MOCK_LLM", "0").strip().lower() in ("1", "true", "yes", "on"):
+            _PLANNER_PROVIDER = get_provider()  # mock — no model tiers
+        else:
+            from llm.claude_provider import ClaudeProvider
+
+            _PLANNER_PROVIDER = ClaudeProvider(model=os.getenv("PLAN_MODEL", "claude-opus-4-8"))
+    return _PLANNER_PROVIDER
+
+
+async def generate_programme(change_request: str) -> dict:
+    """Decompose a change request into a validated DAG programme. Never raises — on ANY failure
+    (provider error, empty/invalid plan) it returns the canned fallback so the canvas always
+    renders. `source` is 'llm' for a validated live plan, 'fallback' otherwise."""
+    import fixtures
+
+    cr = (change_request or "").strip()
+    try:
+        # An explicit shape example anchors the model on the real fields — without it, Sonnet
+        # occasionally emits a degenerate tool call with placeholder keys ($PARAMETER_NAME, ...).
+        user = (
+            f"Change request: {cr}\n\n"
+            f"Candidate program/copybook inventory:\n{_inventory()}\n\n"
+            "Decompose this into a small DAG of dependent sub-changes. Fill the emit tool with a "
+            "CONCRETE plan of exactly this shape (use real ids and inventory names — never emit "
+            "placeholder names):\n"
+            '{"nodes":[{"id":"add-field","label":"Add a field to the shared copybook",'
+            '"change_request":"Add ... to <COPYBOOK>.","edit_sites":["<COPYBOOK>"]},'
+            '{"id":"enforce-it","label":"Enforce it in the program",'
+            '"change_request":"Enforce ... in <PROGRAM>.","edit_sites":["<PROGRAM>"]}],'
+            '"edges":[{"source":"add-field","target":"enforce-it",'
+            '"reason":"<PROGRAM> reads the new field"}]}'
+        )
+        clean = None
+        for _ in range(3):  # Sonnet intermittently emits a placeholder tool call; retry before falling back
+            raw = await _structured(
+                prompts.PLAN_SYSTEM, user, prompts.PlanPayload, max_tokens=4000, provider=_planner_provider()
+            )
+            clean = _validate_plan(raw)
+            if clean:
+                break
+        if not clean:
+            raise ValueError("plan failed validation")
+        return {
+            "id": _slug(cr) or "programme",
+            "title": cr or fixtures.FALLBACK_PROGRAMME["title"],
+            "subtitle": "Decomposed by the planner into dependent, individually-reviewable sub-changes.",
+            "nodes": clean["nodes"],
+            "edges": clean["edges"],
+            "source": "llm",
+        }
+    except Exception as exc:
+        fb = dict(fixtures.FALLBACK_PROGRAMME)
+        fb["title"] = cr or fb["title"]
+        fb["source"] = "fallback"
+        fb["detail"] = str(exc)
+        return fb
 
 
 # --------------------------------------------------------------------------- #

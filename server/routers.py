@@ -62,9 +62,26 @@ class SessionRef(BaseModel):
     session_id: str
 
 
+class PlanRequest(BaseModel):
+    change_request: str
+
+
 # --------------------------------------------------------------------------- #
 # Endpoints                                                                   #
 # --------------------------------------------------------------------------- #
+
+@router.post("/plan")
+async def plan(body: PlanRequest):
+    """Level-1: decompose a change request into a validated DAG programme. Self-guarding —
+    generate_programme() never raises and returns the canned fallback on any failure, so the
+    canvas always gets a renderable plan (source: 'llm' | 'fallback')."""
+    cr = (body.change_request or "").strip()
+    if not cr:
+        return _err(400, "change_request is required")
+    from agent.nodes import generate_programme
+
+    return await generate_programme(cr)
+
 
 @router.post("/session")
 async def create_session(body: SessionCreate, request: Request):
