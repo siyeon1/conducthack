@@ -14,6 +14,25 @@ export function VerifiedBadge({ verified }) {
   );
 }
 
+// Impact-cell provenance: is this narrated program actually a node in the deterministic
+// blast-radius subgraph (L8), or did the LLM name something outside it? Renders nothing
+// when the flag is absent (a backend that omits it degrades gracefully).
+export function InGraphBadge({ inGraph }) {
+  if (inGraph === undefined || inGraph === null) return null;
+  return inGraph ? (
+    <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[11px] font-medium text-emerald-300">
+      <span aria-hidden>✓</span> in graph
+    </span>
+  ) : (
+    <span
+      className="inline-flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[11px] font-medium text-amber-300"
+      title="Named by the model but not present in the deterministic dependency graph"
+    >
+      <span aria-hidden>~</span> narrated
+    </span>
+  );
+}
+
 const RISK_STYLES = {
   high: "border-rose-500/40 bg-rose-500/10 text-rose-300",
   medium: "border-amber-500/40 bg-amber-500/10 text-amber-300",

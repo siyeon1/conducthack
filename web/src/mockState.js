@@ -143,30 +143,35 @@ export const IMPACT_PAYLOAD = {
       relationship:
         "Edit site — add the overdraft guard on the debit (FROM) side, before the available balance is recomputed at line 986.",
       risk: "high",
+      in_graph: true,
     },
     {
       program: "DBCRFUN",
       relationship:
         "Edit site — add the overdraft guard on ordinary debits, alongside the existing MORTGAGE/LOAN block.",
       risk: "high",
+      in_graph: true,
     },
     {
       program: "BNK1TFN",
       relationship:
         "Caller (EXEC CICS LINK to XFRFUN) — surfaces the new failure path to the user; may need a new on-screen message. Its return-code handling already exists.",
       risk: "medium",
+      in_graph: true,
     },
     {
       program: "ACCOUNT (copybook)",
       relationship:
         "Shared record — the guard reads ACCOUNT-OVERDRAFT-LIMIT & ACCOUNT-AVAILABLE-BALANCE. No layout change required.",
       risk: "low",
+      in_graph: true,
     },
     {
       program: "INQACC / UPDACC / CREACC",
       relationship:
         "Also COPY the ACCOUNT record but do not debit — unaffected by the guard. Listed to show the shared blast radius of the ACCOUNT copybook.",
       risk: "low",
+      in_graph: true,
     },
   ],
 };
