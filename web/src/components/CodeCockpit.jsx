@@ -3,6 +3,8 @@ import CodeMirror from "@uiw/react-codemirror";
 import { StreamLanguage } from "@codemirror/language";
 import { cobol } from "@codemirror/legacy-modes/mode/cobol";
 import { unifiedMergeView } from "@codemirror/merge";
+import { EditorView, Decoration, ViewPlugin } from "@codemirror/view";
+import { RangeSetBuilder } from "@codemirror/state";
 import { createTwoFilesPatch } from "diff";
 import { getSource } from "../api.js";
 import AffectedList from "./AffectedList.jsx";
@@ -13,6 +15,44 @@ import { VerifiedBadge } from "./Badge.jsx";
 // as an inline merge — accept/reject the AI's hunk in the gutter, or edit the code yourself — then
 // Accept & record (attested; a human edit is recorded as its own diff via jsdiff) or Deny.
 const cobolLang = StreamLanguage.define(cobol);
+
+// "Culprit" highlighting — mark source lines that reference the data fields this change is about
+// (the router's seed field names). Deterministic (parse the source), grounded in the analysis.
+const culpritTheme = EditorView.baseTheme({
+  ".cm-culprit-line": {
+    backgroundColor: "rgba(244, 63, 94, 0.10)",
+    boxShadow: "inset 3px 0 0 rgba(244, 63, 94, 0.7)",
+  },
+});
+
+function buildCulpritDeco(view, tokens) {
+  const builder = new RangeSetBuilder();
+  const deco = Decoration.line({ class: "cm-culprit-line" });
+  const doc = view.state.doc;
+  for (let i = 1; i <= doc.lines; i++) {
+    const line = doc.line(i);
+    const up = line.text.toUpperCase();
+    if (tokens.some((t) => up.includes(t))) builder.add(line.from, line.from, deco);
+  }
+  return builder.finish();
+}
+
+function culpritExtension(tokens) {
+  return [
+    culpritTheme,
+    ViewPlugin.fromClass(
+      class {
+        constructor(view) {
+          this.decorations = buildCulpritDeco(view, tokens);
+        }
+        update(u) {
+          if (u.docChanged) this.decorations = buildCulpritDeco(u.view, tokens);
+        }
+      },
+      { decorations: (v) => v.decorations }
+    ),
+  ];
+}
 
 const DOT = {
   pending: "bg-slate-500",
@@ -133,6 +173,7 @@ export default function CodeCockpit({ ctx, onOpenSource }) {
   const [srcErr, setSrcErr] = useState(null);
   const [editorDoc, setEditorDoc] = useState(null);
   const [note, setNote] = useState(null);
+  const [showCulprits, setShowCulprits] = useState(true);
 
   const fileProgram =
     programFromDiff(proposeCell.proposed_diff) || (node.edit_sites && node.edit_sites[0]) || selectedProgram || "XFRFUN";
@@ -173,9 +214,42 @@ export default function CodeCockpit({ ctx, onOpenSource }) {
   const hasSuggestion = !!proposeCell.proposed_diff || proposeCell.status === "approved";
   const approvedDone = proposeCell.status === "approved";
 
+  // Culprit tokens = distinctive concept words from the router's seed field names. We use the WORDS
+  // (OVERDRAFT, DORMANT, …), not the full field name, because programs reference fields via
+  // abbreviated host variables (HV-ACCOUNT-OVERDRAFT-LIM) — the concept word survives, the full name
+  // does not. Ubiquitous words are dropped so the highlight stays meaningful.
+  const culpritTokens = useMemo(() => {
+    const seeds = (state && state.seed_symbols) || [];
+    const stop = new Set(["ACCOUNT", "RECORD", "FIELD", "VALUE", "STATUS", "AMOUNT", "NUMBER", "TRANSACTION"]);
+    // Don't highlight program names (they're not data-field culprits).
+    const progs = new Set([...(node.edit_sites || []), fileProgram].map((p) => String(p).toUpperCase()));
+    const ok = (w) => w.length >= 6 && !stop.has(w) && !progs.has(w);
+    const toks = new Set();
+    for (const s of seeds) {
+      const up = String(s).toUpperCase().trim();
+      if (up.includes(" ") || progs.has(up)) continue; // skip business phrases + program names
+      if (up.includes("-")) {
+        toks.add(up); // the full field name (matches in copybooks)
+        for (const w of up.split("-")) if (ok(w)) toks.add(w);
+      } else if (ok(up)) {
+        toks.add(up);
+      }
+    }
+    return Array.from(toks);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state && state.seed_symbols ? state.seed_symbols.join("|") : "", fileProgram]);
+
+  const culpritExt = useMemo(
+    () => (showCulprits && culpritTokens.length ? culpritExtension(culpritTokens) : []),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [showCulprits, culpritTokens.join("|")]
+  );
+
+  const baseExt = useMemo(() => [cobolLang, ...culpritExt], [culpritExt]);
+
   const mergeExtensions = useMemo(
-    () => (built ? [cobolLang, unifiedMergeView({ original: built.original })] : [cobolLang]),
-    [built]
+    () => (built ? [...baseExt, unifiedMergeView({ original: built.original })] : baseExt),
+    [built, baseExt]
   );
 
   function acceptRecord() {
@@ -271,13 +345,25 @@ export default function CodeCockpit({ ctx, onOpenSource }) {
               ✦ AI suggestion — review inline
             </span>
           )}
-          <button
-            type="button"
-            onClick={() => onOpenSource(fileProgram)}
-            className="ml-auto rounded-md border border-slate-600/60 px-2 py-1 text-[11px] text-slate-300 transition hover:bg-slate-700/50"
-          >
-            View full file
-          </button>
+          <div className="ml-auto flex items-center gap-2">
+            {culpritTokens.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setShowCulprits((v) => !v)}
+                title={`Highlight lines referencing: ${culpritTokens.join(", ")}`}
+                className={`rounded-md border px-2 py-1 text-[11px] transition ${showCulprits ? "border-rose-500/50 bg-rose-500/10 text-rose-200" : "border-slate-600/60 text-slate-400 hover:bg-slate-700/50"}`}
+              >
+                ⚠ Culprits
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => onOpenSource(fileProgram)}
+              className="rounded-md border border-slate-600/60 px-2 py-1 text-[11px] text-slate-300 transition hover:bg-slate-700/50"
+            >
+              View full file
+            </button>
+          </div>
         </header>
 
         <div className="h-[440px] overflow-hidden">
@@ -302,12 +388,24 @@ export default function CodeCockpit({ ctx, onOpenSource }) {
               value={approvedDone && built ? built.modified : src.text || ""}
               theme="dark"
               height="440px"
-              extensions={[cobolLang]}
+              extensions={baseExt}
               editable={false}
               basicSetup={{ lineNumbers: true, foldGutter: false, highlightActiveLine: false, highlightActiveLineGutter: false }}
             />
           )}
         </div>
+
+        {showCulprits && culpritTokens.length > 0 && (
+          <div className="flex flex-wrap items-center gap-1 border-t border-slate-700/50 bg-rose-500/[0.04] px-4 py-1.5 text-[11px] text-rose-300/80">
+            <span>⚠ Culprit lines reference</span>
+            {culpritTokens.map((t) => (
+              <code key={t} className="rounded bg-rose-500/15 px-1 font-mono text-rose-200">
+                {t}
+              </code>
+            ))}
+            <span>— the fields this change concerns.</span>
+          </div>
+        )}
 
         {/* AI suggestion action / attested gate */}
         <footer className="border-t border-slate-700/50 bg-ink-900/70 px-4 py-3">
