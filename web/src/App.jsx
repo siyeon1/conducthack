@@ -322,6 +322,25 @@ export default function App() {
         >
           {cell("locate").payload && cell("locate").payload.programs ? (
             <div className="space-y-4">
+              {(() => {
+                const progs = cell("locate").payload.programs || [];
+                const g = progs.filter((p) => p.grounded).length;
+                return g > 0 ? (
+                  <div className="flex items-start gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/[0.07] px-3 py-2 text-[13px] text-emerald-200">
+                    <span className="text-base leading-none">✓</span>
+                    <span>
+                      <span className="font-semibold">
+                        {g} of {progs.length}
+                      </span>{" "}
+                      grounded in the field index —
+                      <span className="text-emerald-300/90">
+                        {" "}
+                        deterministically parsed from the COBOL, not inferred by the model.
+                      </span>
+                    </span>
+                  </div>
+                ) : null;
+              })()}
               <ul className="space-y-2">
                 {cell("locate").payload.programs.map((p, i) => (
                   <li

@@ -173,6 +173,89 @@ def _inventory() -> str:
 # Read-only nodes                                                             #
 # --------------------------------------------------------------------------- #
 
+def _seed_field_defs(seeds) -> dict[str, str]:
+    """FIELD -> the copybook that DEFINES it, for seeds that are real fields (field index; parsed,
+    no LLM). Non-field seeds ("overdraft fee cap", "FCA Consumer Duty") resolve to nothing."""
+    fidx = _field_index()
+    corpus = _corpus()
+    defs: dict[str, str] = {}
+    for s in seeds:
+        su = str(s).upper()
+        for cb in fidx.get(su, []):
+            if cb in corpus.copybooks:
+                defs[su] = cb
+                break
+    return defs
+
+
+def _ground_programs(programs: list[dict], seeds) -> list[dict]:
+    """Deterministic (no-LLM) grounding of the LLM's Locate result against the field index and the
+    parsed COPY graph — the 'parse, don't infer' keystone applied to Locate. For each located unit
+    we try to PROVE it is in the change's data-scope three ways (strongest first):
+      1. it DEFINES a seed field (it is the copybook),
+      2. it USES a seed field name directly in its source,
+      3. it COPYs a copybook that defines a seed field.
+    A grounded unit is marked verified with a parsed citation prefixed to its reason. We also
+    ADD any seed-field-defining copybook the LLM missed (provably central). This only ever adds
+    proof — it never downgrades or drops what the LLM found."""
+    corpus = _corpus()
+    field_defs = _seed_field_defs(seeds)
+    if not field_defs:
+        return programs
+
+    copies: dict[str, set[str]] = {}  # program(UPPER) -> {copybooks it COPYs (UPPER)}
+    for e in _full_graph().get("edges", []):
+        if str(e.get("kind", "")).upper() == "COPY":
+            copies.setdefault(str(e.get("frm", "")).upper(), set()).add(str(e.get("to", "")).upper())
+
+    def reason_for(name: str) -> str | None:
+        nameU = name.upper()
+        for fld, cb in field_defs.items():
+            if cb.upper() == nameU:
+                return f"Defines seed field {fld} — field index (parsed)."
+        unit = corpus.get(name)
+        if unit:
+            txt = (unit.text or "").upper()
+            for fld in field_defs:
+                if fld in txt:
+                    return f"Uses seed field {fld} in source (parsed)."
+        for fld, cb in field_defs.items():
+            if cb.upper() in copies.get(nameU, ()):
+                return f"COPYs {cb}, which defines seed field {fld} (parsed)."
+        return None
+
+    out: list[dict] = []
+    present: set[str] = set()
+    for p in programs:
+        p = dict(p)
+        name = (p.get("program", "") or "").split(" ")[0]
+        present.add(name.upper())
+        r = reason_for(name) if name else None
+        if r:
+            p["grounded"] = True
+            p["verified"] = True
+            base = (p.get("reason", "") or "").strip()
+            p["reason"] = f"✓ Parsed: {r}" + (f" {base}" if base else "")
+        else:
+            p.setdefault("grounded", False)
+        out.append(p)
+
+    # Add any seed-field-defining copybook the LLM omitted — provably central, no guessing.
+    for fld, cb in field_defs.items():
+        if cb.upper() in present:
+            continue
+        present.add(cb.upper())
+        u = corpus.get(cb)
+        out.append({
+            "program": cb,
+            "file": u.file if u else "",
+            "reason": f"✓ Parsed: Defines seed field {fld} — field index (no LLM). Added deterministically.",
+            "verified": True,
+            "grounded": True,
+        })
+    return out
+
+
 async def locate_node(state: GraphState) -> dict:
     updates = await _ensure_routed(state)
     intent = updates.get("intent", state.get("intent"))
@@ -185,11 +268,15 @@ async def locate_node(state: GraphState) -> dict:
     )
     try:
         payload = await _structured(prompts.LOCATE_SYSTEM, user, prompts.LocatePayload)
-        payload["programs"] = _validate_programs(payload.get("programs", []))
+        payload["programs"] = _ground_programs(
+            _validate_programs(payload.get("programs", [])), seeds
+        )
         n = len(payload["programs"])
+        n_grounded = sum(1 for p in payload["programs"] if p.get("grounded"))
         result = _cell(
             "locate", "done",
-            f"Located **{n}** affected program(s)/copybook(s) for intent `{intent}`.",
+            f"Located **{n}** affected program(s)/copybook(s) for intent `{intent}` "
+            f"— **{n_grounded}** grounded in the field index (parsed, no LLM).",
             citations=_citations_from(payload["programs"]),
             payload=payload,
         )
