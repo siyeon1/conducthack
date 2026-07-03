@@ -124,7 +124,7 @@ export default function StageCockpit({ node, onBack, onStatusChange, onRecorded 
     }
   }
 
-  async function handleDecision(decision) {
+  async function handleDecision(decision, overrideDiff) {
     if (!sessionId) return;
     // Attested approval: a state-changing decision must carry the human's reasoning.
     if (decision !== "reject" && !rationale.trim()) {
@@ -137,10 +137,11 @@ export default function StageCockpit({ node, onBack, onStatusChange, onRecorded 
     setGateBusy(true);
     setErrors((e) => ({ ...e, propose: null }));
     try {
+      const diffForEdit = overrideDiff != null ? overrideDiff : editedDiff;
       const { state: st } = await approveCell(
         sessionId,
         decision,
-        decision === "edit" ? editedDiff : undefined,
+        decision === "edit" ? diffForEdit : undefined,
         decision === "reject" ? undefined : rationale.trim()
       );
       setState(st);
