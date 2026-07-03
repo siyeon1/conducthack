@@ -1,7 +1,8 @@
 // GraphView.jsx — the blast-radius dependency graph, hand-rolled as a tidy SVG
 // (no heavy graph lib). Nodes are laid out in three tiers (callers → programs →
-// records/copybooks). Solid line = verified (parsed) edge; dashed amber = inferred
-// (LLM-guessed). Edge kind (CALL/PERFORM/COPY/WRITES) labels the midpoint.
+// records/copybooks). Solid line = verified (parsed) edge; dashed amber = inferred.
+// Edge kind is on hover (labels dropped for legibility); edges off the edit site are
+// dimmed. Nodes are clickable via onNodeClick(name, role).
 
 const NODE_W = 132;
 const NODE_H = 46;
@@ -18,12 +19,13 @@ function EmptyState() {
   );
 }
 
-export default function GraphView({ graph, highlight = [] }) {
+export default function GraphView({ graph, highlight = [], onNodeClick }) {
   const nodes = (graph && graph.nodes) || [];
   const edges = (graph && graph.edges) || [];
   if (!nodes.length) return <EmptyState />;
 
   const hi = new Set(highlight.map((h) => String(h).toUpperCase()));
+  const focused = hi.size > 0;
   const froms = new Set(edges.map((e) => e.frm));
   const tos = new Set(edges.map((e) => e.to));
 
@@ -134,55 +136,33 @@ export default function GraphView({ graph, highlight = [] }) {
             </marker>
           </defs>
 
-          {/* edges first (under nodes) */}
+          {/* edges first (under nodes). Kind labels dropped for legibility — kind is on the
+              hover title; edges not touching an edit site are dimmed to focus the blast path. */}
           {edges.map((e, i) => {
             const a = pos[e.frm];
             const b = pos[e.to];
             if (!a || !b) return null;
-            // connect from the source's bottom edge to the target's top edge
             const x1 = a.cx;
             const y1 = a.y + (b.cy > a.cy ? NODE_H : 0);
             const x2 = b.cx;
             const y2 = b.y + (b.cy > a.cy ? 0 : NODE_H);
-            const mx = (x1 + x2) / 2;
-            const my = (y1 + y2) / 2;
             const color = e.verified ? "#64748b" : "#f59e0b";
-            const label = e.kind || "";
-            const labelW = label.length * 6.5 + 10;
+            const focusEdge = !focused || hi.has(e.frm) || hi.has(e.to);
             return (
-              <g key={i}>
-                <line
-                  x1={x1}
-                  y1={y1}
-                  x2={x2}
-                  y2={y2}
-                  stroke={color}
-                  strokeWidth="1.6"
-                  strokeDasharray={e.verified ? "0" : "5 4"}
-                  markerEnd={`url(#arrow-${e.verified ? "verified" : "inferred"})`}
-                  opacity="0.85"
-                />
-                <rect
-                  x={mx - labelW / 2}
-                  y={my - 9}
-                  width={labelW}
-                  height={16}
-                  rx={4}
-                  fill="#0b1120"
-                  stroke={color}
-                  strokeOpacity="0.4"
-                />
-                <text
-                  x={mx}
-                  y={my + 3}
-                  textAnchor="middle"
-                  fontSize="9.5"
-                  fontFamily="ui-monospace, monospace"
-                  fill={color}
-                >
-                  {label}
-                </text>
-              </g>
+              <line
+                key={i}
+                x1={x1}
+                y1={y1}
+                x2={x2}
+                y2={y2}
+                stroke={color}
+                strokeWidth={focusEdge ? 1.7 : 1.1}
+                strokeDasharray={e.verified ? "0" : "5 4"}
+                markerEnd={`url(#arrow-${e.verified ? "verified" : "inferred"})`}
+                opacity={focusEdge ? 0.85 : 0.12}
+              >
+                <title>{`${e.frm} —${e.kind}→ ${e.to}${e.verified ? "" : " (inferred)"}`}</title>
+              </line>
             );
           })}
 
@@ -192,7 +172,12 @@ export default function GraphView({ graph, highlight = [] }) {
             if (!p) return null;
             const s = nodeStyle(n);
             return (
-              <g key={n}>
+              <g
+                key={n}
+                onClick={onNodeClick ? () => onNodeClick(n, roleOf(n)) : undefined}
+                style={{ cursor: onNodeClick ? "pointer" : "default" }}
+              >
+                <title>{onNodeClick ? `Open ${n}` : n}</title>
                 <rect
                   x={p.x}
                   y={p.y}

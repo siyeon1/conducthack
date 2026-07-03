@@ -246,3 +246,75 @@ export async function tamperLedger(session_id) {
   }
   return apiFetch("/ledger/tamper", { method: "POST", body: { session_id } });
 }
+
+// Small offline source excerpts — live mode serves the FULL source from GET /source/{name}.
+const MOCK_SOURCE = {
+  XFRFUN: {
+    name: "XFRFUN",
+    file: "src/base/cobol_src/XFRFUN.cbl",
+    kind: "program",
+    n_lines: 1924,
+    text: [
+      "       IDENTIFICATION DIVISION.",
+      "       PROGRAM-ID. XFRFUN.",
+      "      *============================================================",
+      "      * Move funds between two accounts.",
+      "      * No checking is made on overdraft limits.",
+      "      *============================================================",
+      "           COPY ACCOUNT.",
+      "           COPY PROCTRAN.",
+      "      *    ... debit the FROM account (no overdraft guard here) ...",
+      "           COMPUTE HV-ACCOUNT-AVAIL-BAL =",
+      "           HV-ACCOUNT-AVAIL-BAL - COMM-AMT.",
+      "      *    (live mode serves the full 1,924-line source)",
+    ].join("\n"),
+  },
+  DBCRFUN: {
+    name: "DBCRFUN",
+    file: "src/base/cobol_src/DBCRFUN.cbl",
+    kind: "program",
+    n_lines: 861,
+    text: [
+      "       PROGRAM-ID. DBCRFUN.",
+      "      *    Apply a debit or credit to one account.",
+      "           IF (HV-ACCOUNT-ACC-TYPE = 'MORTGAGE'",
+      "           OR  HV-ACCOUNT-ACC-TYPE = 'LOAN    ')",
+      "              MOVE '4' TO COMM-FAIL-CODE",
+      "      *       the ONLY guard — overdraft limit is read but never tested",
+      "           END-IF.",
+    ].join("\n"),
+  },
+  ACCOUNT: {
+    name: "ACCOUNT",
+    file: "src/base/cobol_copy/ACCOUNT.cpy",
+    kind: "copybook",
+    n_lines: 42,
+    text: [
+      "       01  ACCOUNT.",
+      "           03 ACCOUNT-OVERDRAFT-LIMIT    PIC 9(8).",
+      "           03 ACCOUNT-AVAILABLE-BALANCE  PIC S9(10)V99.",
+      "           03 ACCOUNT-ACTUAL-BALANCE     PIC S9(10)V99.",
+      "           03 ACCOUNT-INTEREST-RATE      PIC 9(4)V99.",
+    ].join("\n"),
+  },
+};
+
+export async function getSource(name) {
+  const key = String(name || "")
+    .toUpperCase()
+    .replace(/\s*\(copybook\)/i, "")
+    .trim();
+  if (USE_MOCK) {
+    await delay(200);
+    return (
+      MOCK_SOURCE[key] || {
+        name: key,
+        file: "",
+        kind: "",
+        n_lines: 0,
+        text: `      * offline mock has no source for ${key} — run against the live backend to read it.`,
+      }
+    );
+  }
+  return apiFetch(`/source/${encodeURIComponent(key)}`);
+}

@@ -4,6 +4,7 @@ import { VerifiedBadge, RiskBadge, InGraphBadge } from "./components/Badge.jsx";
 import DiffView from "./components/DiffView.jsx";
 import GraphView from "./components/GraphView.jsx";
 import LedgerPanel from "./components/LedgerPanel.jsx";
+import SourceView from "./components/SourceView.jsx";
 import {
   USE_MOCK,
   createSession,
@@ -66,6 +67,7 @@ export default function App() {
   const [running, setRunning] = useState({}); // cell -> bool
   const [errors, setErrors] = useState({}); // cell -> {error, detail}
   const [selectedProgram, setSelectedProgram] = useState("XFRFUN");
+  const [sourceOpen, setSourceOpen] = useState(null); // program/copybook to view, or null
 
   // Propose gate local UI
   const [editing, setEditing] = useState(false);
@@ -452,7 +454,11 @@ export default function App() {
                 <GraphView
                   graph={state && state.graph}
                   highlight={["XFRFUN", "DBCRFUN"]}
+                  onNodeClick={(name) => setSourceOpen(name)}
                 />
+                <p className="mt-2 text-[11px] text-slate-500">
+                  Click any node to read its source.
+                </p>
               </div>
             </div>
           ) : (
@@ -644,6 +650,8 @@ export default function App() {
         Legacy Move · read-only cells run freely · the state-changing step is gated
         behind explicit human approval · every approved change is provable.
       </footer>
+
+      <SourceView name={sourceOpen} onClose={() => setSourceOpen(null)} />
     </div>
   );
 }

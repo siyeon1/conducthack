@@ -148,6 +148,24 @@ async def tamper_ledger(body: SessionRef):
     return {"ok": ok}
 
 
+@router.get("/source/{name}")
+async def get_source(name: str):
+    """Serve the raw COBOL source for a program/copybook so the engineer can actually READ the
+    code the agent is narrating. Deterministic — straight from the in-memory corpus."""
+    from agent.nodes import _corpus
+
+    unit = _corpus().get(name)
+    if not unit:
+        return _err(404, "unknown program or copybook", name)
+    return {
+        "name": unit.name,
+        "file": unit.file,
+        "kind": unit.kind,
+        "n_lines": unit.n_lines,
+        "text": unit.text,
+    }
+
+
 @router.get("/metrics/{session_id}")
 async def metrics(session_id: str, request: Request):
     sess = request.app.state.sessions.get(session_id)
