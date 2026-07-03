@@ -69,6 +69,18 @@ def _full_graph():
     return _FULL_GRAPH
 
 
+_FIELD_INDEX = None
+
+
+def _field_index():
+    global _FIELD_INDEX
+    if _FIELD_INDEX is None:
+        from analysis.cobol import build_field_index
+
+        _FIELD_INDEX = build_field_index(_corpus())
+    return _FIELD_INDEX
+
+
 # --------------------------------------------------------------------------- #
 # Helpers                                                                      #
 # --------------------------------------------------------------------------- #
@@ -214,7 +226,19 @@ async def impact_node(state: GraphState) -> dict:
     seed_progs = _located_program_names(state)
     if not seed_progs:
         seed_progs = [s.upper() for s in seeds if s.upper() in corpus.programs]
-    focus = sorted({cb for cb in corpus.copybooks for s in seeds if cb in s.upper()})
+    # Deterministic seed->copybook grounding: resolve each seed field to the copybook that
+    # DEFINES it (field index, no LLM), falling back to a substring match for non-field seeds.
+    fidx = _field_index()
+    focus_set: set[str] = set()
+    for s in seeds:
+        su = s.upper()
+        for unit in fidx.get(su, []):
+            if unit in corpus.copybooks:
+                focus_set.add(unit)
+        for cb in corpus.copybooks:
+            if cb in su:
+                focus_set.add(cb)
+    focus = sorted(focus_set)
 
     sub = subgraph_for(_full_graph(), seed_progs, focus_copybooks=focus or None) if seed_progs else {"nodes": [], "edges": []}
 

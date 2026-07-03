@@ -189,7 +189,7 @@ export const MOCK_GRAPH = {
     "PROCTRAN",
   ],
   edges: [
-    { frm: "BNK1TFN", to: "XFRFUN", kind: "CALL", verified: false },
+    { frm: "BNK1TFN", to: "XFRFUN", kind: "CALL", verified: true },
     { frm: "XFRFUN", to: "ACCOUNT", kind: "COPY", verified: true },
     { frm: "XFRFUN", to: "PROCTRAN", kind: "COPY", verified: true },
     { frm: "DBCRFUN", to: "ACCOUNT", kind: "COPY", verified: true },

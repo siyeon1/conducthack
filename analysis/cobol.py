@@ -7,11 +7,13 @@ graph — it never invents edges (§5). The RETURN SHAPE is frozen across tiers:
 `verified` flags and accuracy change when a fuller parser lands (T2.1). That is what lets
 the UI/cells stay untouched when inferred edges become verified.
 
-Tier-1 status of this implementation — a lightweight, honest static extractor:
-  * COPY edges  → parsed from `COPY <name>` statements           → verified=True
-  * CALL edges  → parsed from `CALL '<name>'`                     → verified=True
-  * CICS LINK/XCTL edges → heuristic `PROGRAM('<name>')` match    → verified=False (labelled inferred)
-  * WRITES edges → heuristic (WRITE-TO-<copybook> / INSERT INTO)  → verified=False (labelled inferred)
+A lightweight, honest static extractor (T2.1 — a "lightweight static extractor", not a full grammar):
+  * COPY edges     → parsed from `COPY <name>`                          → verified=True
+  * CALL edges     → parsed from static `CALL '<name>'`                 → verified=True
+  * CICS LINK/XCTL → parsed from `... LINK|XCTL ... PROGRAM('<name>')`   → verified=True
+  * other PROGRAM()→ e.g. HANDLE ABEND — a real reference, not a call    → verified=False (inferred)
+  * WRITES edges   → heuristic (WRITE-TO-<copybook> / SQL INSERT INTO)   → verified=False (inferred)
+  * data items     → 01–49/77 names + PIC via build_field_index()        → deterministic field grounding
 Comment lines (indicator column 7 == '*') are skipped. Self-loops are dropped.
 """
 from __future__ import annotations
@@ -25,6 +27,8 @@ _CALL_RE = re.compile(r"""\bCALL\s+['"]([A-Z0-9][A-Z0-9-]*)['"]""", re.IGNORECAS
 _PROGRAM_RE = re.compile(r"""PROGRAM\(\s*['"]([A-Z0-9][A-Z0-9-]*)['"]\s*\)""", re.IGNORECASE)
 _INSERT_RE = re.compile(r"\bINSERT\s+INTO\s+([A-Z0-9][A-Z0-9-]*)", re.IGNORECASE)
 _WRITE_SECT_RE = re.compile(r"\bWRITE-TO-([A-Z0-9][A-Z0-9-]*)", re.IGNORECASE)
+_DATA_ITEM_RE = re.compile(r"^\s*(0[1-9]|[1-4][0-9]|77)\s+([A-Z0-9][A-Z0-9-]*)", re.IGNORECASE)
+_PIC_RE = re.compile(r"\bPIC(?:TURE)?\s+(?:IS\s+)?([-A-Z0-9()V.,+*$/CRDBZ]+)", re.IGNORECASE)
 
 
 def _is_comment(line: str) -> bool:
@@ -69,11 +73,16 @@ def graph_from_corpus(corpus: Corpus) -> dict:
         for m in _CALL_RE.finditer(blob):
             edges.append(_edge(prog.name, m.group(1), "CALL", True))
 
-        # CICS LINK/XCTL: PROGRAM('X') referencing another known program → inferred CALL.
+        # CICS transfers: PROGRAM('X') naming another known program. A LINK/XCTL in the
+        # immediate context is a deterministic static parse → verified; other PROGRAM(...)
+        # uses (e.g. HANDLE ABEND) are real references but not calls → inferred. (T2.1:
+        # swap inferred->verified where proven.)
         for m in _PROGRAM_RE.finditer(blob):
             target = m.group(1).upper()
             if target in corpus.programs and target != prog.name:
-                edges.append(_edge(prog.name, target, "CALL", False))
+                ctx = blob[max(0, m.start() - 40) : m.start()].upper()
+                verified = ("LINK" in ctx) or ("XCTL" in ctx)
+                edges.append(_edge(prog.name, target, "CALL", verified))
 
         # WRITES: heuristic — a WRITE-TO-<X> section or SQL INSERT INTO <X> naming a copybook.
         for m in list(_WRITE_SECT_RE.finditer(blob)) + list(_INSERT_RE.finditer(blob)):
@@ -90,6 +99,39 @@ def graph_from_corpus(corpus: Corpus) -> dict:
 def build_dependency_graph(corpus_dir: str) -> dict:
     """§8.6 entry point — load the corpus and build the graph. Shape frozen across tiers."""
     return graph_from_corpus(load_corpus(corpus_dir))
+
+
+# --------------------------------------------------------------------------- #
+# Data-item extraction (01/05 + PIC) — deterministic field grounding (T2.1).    #
+# --------------------------------------------------------------------------- #
+
+def extract_fields(text: str) -> list[dict]:
+    """Parse 01–49/77-level data items (name + PIC) from COBOL source. Elementary items carry
+    a PIC; group items do not. FILLER is skipped. Deterministic — no LLM."""
+    out: list[dict] = []
+    for ln in _content_lines(text):
+        m = _DATA_ITEM_RE.match(ln)
+        if not m:
+            continue
+        name = m.group(2).upper()
+        if name == "FILLER":
+            continue
+        pm = _PIC_RE.search(ln)
+        out.append({"level": int(m.group(1)), "name": name, "pic": pm.group(1).rstrip(".") if pm else None})
+    return out
+
+
+def build_field_index(corpus: Corpus) -> dict[str, list[str]]:
+    """Map each data-field name -> the unit(s) that DEFINE it (copybooks first, then programs).
+    Lets a seed symbol like ACCOUNT-OVERDRAFT-LIMIT resolve to its defining copybook with NO
+    LLM — the deterministic 'not a prompt wrapper' keystone (§5)."""
+    index: dict[str, list[str]] = {}
+    for unit in list(corpus.copybooks.values()) + list(corpus.programs.values()):
+        for f in extract_fields(unit.text):
+            bucket = index.setdefault(f["name"], [])
+            if unit.name not in bucket:
+                bucket.append(unit.name)
+    return index
 
 
 # --------------------------------------------------------------------------- #
