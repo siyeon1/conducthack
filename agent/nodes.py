@@ -235,14 +235,44 @@ async def explain_node(state: GraphState) -> dict:
     return {**updates, "selected_program": program, **_merge_cell(state, "explain", result)}
 
 
-def _validate_affected(affected: list[dict], sub: dict) -> list[dict]:
+def _coerce_affected_list(affected) -> list:
+    """L8: forced tool use guarantees the top-level object shape but NOT that a nested array-typed
+    field is actually a list — Claude occasionally returns `affected` as a JSON STRING (the real
+    list, serialized). Normalise it to a list BEFORE validation, so we never iterate a string
+    character-by-character (which produced 41 one-letter "programs"). Parsing recovers the real
+    items when the string is valid JSON."""
+    import json
+
+    if isinstance(affected, list):
+        return affected
+    if isinstance(affected, dict):
+        inner = affected.get("affected")
+        return inner if isinstance(inner, list) else [affected]
+    if isinstance(affected, str):
+        s = affected.strip()
+        if not s:
+            return []
+        try:
+            parsed = json.loads(s)
+        except Exception:
+            return []
+        if isinstance(parsed, list):
+            return parsed
+        if isinstance(parsed, dict):
+            inner = parsed.get("affected")
+            return inner if isinstance(inner, list) else [parsed]
+        return []
+    return []
+
+
+def _validate_affected(affected, sub: dict) -> list[dict]:
     """L8: tag each narrated impact item with whether its program is actually a node in the
     deterministic subgraph. The LLM narrates the graph (ground truth); anything it names that
     is NOT in the graph is flagged `in_graph=False` so it is never shown as a proven dependency."""
     node_set = {n.upper() for n in sub.get("nodes", [])}
     out = []
     seen: set[str] = set()
-    for item in affected:
+    for item in _coerce_affected_list(affected):
         if isinstance(item, str):
             item = {"program": item, "relationship": "", "risk": "low"}
         elif isinstance(item, dict):
