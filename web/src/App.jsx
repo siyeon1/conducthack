@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
+import LandingPage from "./components/LandingPage.jsx";
 import ProgrammeCanvas from "./components/ProgrammeCanvas.jsx";
 import StageCockpit from "./components/StageCockpit.jsx";
 import { FCA_PROGRAMME } from "./programme.js";
@@ -10,6 +11,7 @@ import { listLibrary, saveToLibrary, deleteFromLibrary } from "./library.js";
 // approved plan unlocks execution. The shell owns the programme, whether it's approved, which node
 // is open, each node's status, the programme-level audit trail, and the saved-programme library.
 export default function App() {
+  const [entered, setEntered] = useState(false); // landing page → cockpit
   const [programme, setProgramme] = useState(FCA_PROGRAMME);
   const [approved, setApproved] = useState(false); // the plan gate: draft → approved
   const [statuses, setStatuses] = useState({}); // nodeId -> "pending"|"in_progress"|"awaiting_approval"|"done"
@@ -96,6 +98,10 @@ export default function App() {
     () => programme.nodes.map((n) => ledger[n.id]).filter(Boolean),
     [programme, ledger]
   );
+
+  if (!entered) {
+    return <LandingPage onEnter={() => setEntered(true)} />;
+  }
 
   // Only an approved plan can open a cockpit.
   if (activeNode && approved) {

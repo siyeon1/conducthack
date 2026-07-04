@@ -252,10 +252,10 @@ export default function StageCockpit({ node, onBack, onStatusChange, onRecorded 
             </div>
             <span
               className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-medium text-emerald-300"
-              title="Placeholder — flips on when the local (Ollama) provider is active"
+              title="Parsing, the dependency graph, and the ledger run locally. Explain/Propose send code snippets to the Claude API (in-VPC / zero-retention deployment is a config choice, not a code change)."
             >
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-              Running locally — your code never leaves this machine
+              Proposal-only — nothing is ever applied automatically
             </span>
             {USE_MOCK && (
               <span className="rounded-full border border-slate-600/50 bg-slate-700/30 px-2.5 py-1 text-[11px] font-medium text-slate-400">
