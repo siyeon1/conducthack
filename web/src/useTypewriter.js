@@ -9,7 +9,8 @@ import { useEffect, useState } from "react";
 
 const TYPE_MS = 45;
 const DELETE_MS = 22;
-const HOLD_MS = 1800;
+const BLINK_MS = 500;
+const HOLD_BLINKS = 8; // ~4s: the full sentence stays, a "." blinking at its end
 const GAP_MS = 450;
 const CURSOR = "▌";
 
@@ -22,7 +23,9 @@ function prefersReducedMotion() {
 }
 
 export function useTypewriterPlaceholder(prompts, { active = true, fallback = "" } = {}) {
-  const [text, setText] = useState("");
+  // Starts as the bare cursor, and the machine below NEVER emits empty text — so the component's
+  // static-placeholder fallback can't flash through between prompts (the "glitch").
+  const [text, setText] = useState(CURSOR);
   // The full prompt currently in rotation. Deliberately NOT reset on deactivate — when the user
   // focuses the bar (animation stops), Tab-to-accept still targets the last shown suggestion.
   const [suggestion, setSuggestion] = useState(prompts[0] || "");
@@ -37,10 +40,12 @@ export function useTypewriterPlaceholder(prompts, { active = true, fallback = ""
 
     let i = 0;
     let pos = 0;
-    let phase = "typing"; // typing → holding → deleting → (next prompt) typing
+    let blink = 0;
+    let phase = "typing"; // typing → holding (blinking ".") → deleting → (next prompt) typing
     let timer = null;
     let alive = true;
     setSuggestion(prompts[0]);
+    setText(CURSOR); // visible immediately — no empty frame before the first tick
 
     const tick = () => {
       if (!alive) return;
@@ -50,16 +55,20 @@ export function useTypewriterPlaceholder(prompts, { active = true, fallback = ""
         setText(prompt.slice(0, pos) + CURSOR);
         if (pos >= prompt.length) {
           phase = "holding";
-          timer = setTimeout(tick, HOLD_MS);
-        } else {
-          timer = setTimeout(tick, TYPE_MS);
+          blink = 0;
         }
+        timer = setTimeout(tick, phase === "holding" ? BLINK_MS : TYPE_MS);
       } else if (phase === "holding") {
-        phase = "deleting";
-        timer = setTimeout(tick, DELETE_MS);
+        // The full sentence stays put; a "." at its end blinks on/off. Cursor block dropped.
+        blink += 1;
+        setText(blink % 2 ? prompt + "." : prompt);
+        if (blink >= HOLD_BLINKS) phase = "deleting";
+        timer = setTimeout(tick, phase === "deleting" ? DELETE_MS : BLINK_MS);
       } else {
         pos -= 1;
-        setText(pos > 0 ? prompt.slice(0, pos) + CURSOR : "");
+        // Between prompts the bare cursor holds the line — never emit "" (the fallback
+        // placeholder would flash through and read as a glitch).
+        setText(pos > 0 ? prompt.slice(0, pos) + CURSOR : CURSOR);
         if (pos <= 0) {
           i = (i + 1) % prompts.length;
           setSuggestion(prompts[i]);
