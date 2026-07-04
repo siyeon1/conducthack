@@ -11,6 +11,61 @@ executing only what the human approves.
 > enforced** on the transfer/debit path (`XFRFUN`/`DBCRFUN`), so the honest fix is to ADD a
 > guard — the tool reasons about the *absence* of logic.
 
+## See it work
+
+Plain-English change in. A **verified, human-approved, tamper-evident** change out — the AI proposes, a human approves, and the ledger proves it.
+
+<p align="center">
+  <img src="docs/media/loop-2c-prove.gif" width="820" alt="shft's tamper-evident ledger: an approval is recorded, then a tampered entry makes integrity verification fail, in red">
+</p>
+
+**What the demo shows**
+
+1. Type a change in plain English → shft decomposes it into a small, ordered plan, every dependency graded **verified** (parsed from the source) or **inferred** (the AI's guess).
+2. Nothing runs until a named engineer **approves the plan**.
+3. For each sub-change the cockpit **locates** every affected program, **explains** the COBOL, and maps the **blast radius** — grounded in the parsed code, with the culprit lines highlighted.
+4. The AI drafts the edit **inline as a diff**; a human types a justification and **signs** (the coral gate).
+5. Every approval is **hash-chained** into a tamper-evident ledger — alter the history and verification **fails, visibly**.
+
+### The change lifecycle
+
+<table>
+<tr>
+<td width="50%" valign="top">
+<b>1 · Describe → decompose</b><br>
+<sub>Type the change in plain English; watch it become a verified, editable dependency plan.</sub><br><br>
+<img src="docs/media/loop-1-describe.gif" width="100%" alt="Typing a change request, generating a dependency DAG, editing a node, and approving the plan">
+</td>
+<td width="50%" valign="top">
+<b>2a · Understand</b><br>
+<sub>Locate the affected programs, explain the COBOL idioms, map the blast radius — grounded in parsed source.</sub><br><br>
+<img src="docs/media/loop-2a-understand.gif" width="100%" alt="Running Locate, Explain and Impact in the stage cockpit">
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
+<b>2b · Change, human-gated</b><br>
+<sub>The AI drafts the smallest edit inline; a named engineer types a reason and signs.</sub><br><br>
+<img src="docs/media/loop-2b-change.gif" width="100%" alt="The AI change shown as an inline diff, then approved with a typed justification at the coral human gate">
+</td>
+<td width="50%" valign="top">
+<b>2c · Prove it</b><br>
+<sub>Every approval is hash-chained; tamper with the history and verification fails, in red.</sub><br><br>
+<img src="docs/media/loop-2c-prove.gif" width="100%" alt="The tamper-evident ledger failing verification after a tampered entry">
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
+<b>3 · The trail</b><br>
+<sub>Programme progress, the hash-chained audit trail, your saved library, and the integrations it plugs into.</sub><br><br>
+<img src="docs/media/loop-3-trail.gif" width="100%" alt="The programme audit trail, saved library, and integrations panel">
+</td>
+<td width="50%" valign="top"></td>
+</tr>
+</table>
+
+<sub>The clips above are muted, autoplaying GIFs. Full-resolution MP4s of each are in <a href="docs/media/"><code>docs/media/</code></a> — for a click-to-play inline player, drag an MP4 into a GitHub comment/issue and paste the generated <code>user-attachments</code> URL (GitHub strips autoplay from committed <code>&lt;video&gt;</code> tags, which is why the loops above are GIFs). Recorded against the bundled mock provider — deterministic, no backend required.</sub>
+
 See **`Claude.MD`** for the full spec, frozen contracts (§8), and landmine map (§14).
 
 ## Status — Phase 0 complete (mock end-to-end, twice-cold)
