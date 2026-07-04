@@ -1,4 +1,4 @@
-# Legacy Move — Pitch Kit (House of Lords final)
+# shft — Pitch Kit (House of Lords final)
 
 All figures below are regulator-sourced and verifiable. The folklore COBOL stats
 (220bn/800bn lines, "43% of banking") are deliberately absent — they trace to vendor
@@ -21,7 +21,7 @@ decks and a 2017 Reuters graphic; a judge who Googles them will find that out.
 > COBOL that the people who wrote it are retiring from, and the people replacing them
 > were never taught.
 >
-> **Legacy Move makes the change itself safe.** You type the business change in plain
+> **shft makes the change itself safe.** You type the business change in plain
 > English — "cap overdraft fees to comply with Consumer Duty." The system reads the
 > real code — parsed, not guessed — and breaks the change into small, ordered steps on
 > one screen. Every dependency is labelled **verified** against the source, or merely
@@ -86,8 +86,8 @@ currently under the Restoration & Renewal programme — this analogy is theirs.)
 > accountability provable: named approver, typed rationale, tamper-evident ledger.
 
 **4. "COBOL engineers are retiring — does this replace them?"**
-> It's succession, not replacement. The average COBOL engineer is near retirement and
-> universities stopped teaching it. This teaches COBOL idioms to the next generation,
+> It's succession, not replacement. COBOL expertise sits with an ageing, shrinking pool of
+> engineers, and few universities still teach it. This teaches COBOL idioms to the next generation,
 > gives them the veteran's mental map of dependencies, and still requires a human to
 > write, sign, and justify every change.
 
@@ -101,7 +101,7 @@ currently under the Restoration & Renewal programme — this analogy is theirs.)
 
 ## "Why not just buy the team Copilot seats?"
 
-| Dimension | LLM subscription | Legacy Move |
+| Dimension | LLM subscription | shft |
 |---|---|---|
 | Dependency truth | Inferred from context; 19.7% of suggested dependencies hallucinated (USENIX Sec. 2025) | COPY/CALL edges parsed deterministically; every edge tagged verified vs inferred |
 | Planning | Freeform chat, different every time, no shared artifact | Editable, cycle-checked DAG — a durable, reviewable plan |
@@ -110,7 +110,7 @@ currently under the Restoration & Renewal programme — this analogy is theirs.)
 | Reproducibility | Temperature-0 output isn't bit-reproducible in production serving | Re-parse the same source → the identical graph. That's what makes evidence |
 | Regulator fit | SOC 2 / SSO — controls about the *vendor* | The evidence artifact PS21/3 and SM&CR actually demand |
 
-**Punchline:** *"A subscription gives every engineer a brilliant intern. Legacy Move
+**Punchline:** *"A subscription gives every engineer a brilliant intern. shft
 gives the bank a governed change process with proof."*
 
 **Supporting stats (citable):** Veracode 2025 — LLMs chose the insecure implementation

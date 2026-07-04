@@ -32,11 +32,11 @@ async def lifespan(app: FastAPI):
         app.state.sessions = {}
         get_ledger()  # eager-init the ledger store
         prov = get_provider()
-        print(f"[Legacy Move] graph compiled · provider={prov.name} · local={prov.runs_locally}")
+        print(f"[shft] graph compiled · provider={prov.name} · local={prov.runs_locally}")
         yield
 
 
-app = FastAPI(title="Legacy Move — Change Cockpit", lifespan=lifespan)
+app = FastAPI(title="shft — Change Cockpit", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,

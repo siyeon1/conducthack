@@ -1,4 +1,4 @@
-"""scripts/drive.py — end-to-end HTTP self-test for the Legacy Move MVP.
+"""scripts/drive.py — end-to-end HTTP self-test for the shft MVP.
 
 Runs the full overdraft flow N times against a running server (default 2 = the twice-cold DoD):
   Locate → Explain → Impact → Propose ─[approve]─ Record → Ledger verify → Tamper → Verify(fail)

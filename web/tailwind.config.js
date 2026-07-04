@@ -32,13 +32,6 @@ export default {
           DEFAULT: "#0B0B10",
           soft: "#4A4652",
           mute: "#9A96A3",
-          // LEGACY (pre-rebrand dark-cockpit shades) — kept so unswept components keep rendering
-          // between rebrand stages. Remove once Stages 2–3 (canvas + cockpit sweeps) land.
-          950: "#0b1120",
-          900: "#0f172a",
-          850: "#131c31",
-          800: "#1e293b",
-          700: "#334155",
         },
         line: "#E7E0EE",
         paper: {

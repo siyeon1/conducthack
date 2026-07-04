@@ -1,4 +1,4 @@
-# Legacy Move — Complete Build & Instructions Document (v2)
+# shft — Complete Build & Instructions Document (v2)
 ### Conduct AI Track: "Make Legacy Move" · Imperial Hackathon
 **This is the single source of truth for the team. If you have a question while building, check here first. If the answer isn't here, ask the lead, then we add it here.**
 
@@ -114,12 +114,12 @@ The five *user-visible* cells (the MVP flow), for our overdraft example:
 ### 4.2 The pitch spine (memorise the shape, not the words)
 1. **Hook (15s) — documented pain.** "In 2018, TSB tried to change its core banking system. It locked 1.9 million customers out and cost over £330 million. The cause wasn't bad code — it was that nobody fully understood the system they were changing. Across UK banking, half of banks now depend on one or two people, near retirement, to understand software written in the 1970s."
 2. **Gap (15s) — who's left.** "The engineers who understood COBOL are retiring. The graduates banks can hire have never seen it. So every business change waits months while a scarce specialist traces, by hand, what the code does and what will break."
-3. **Product (20s) — what we built.** "This is Legacy Move. A graduate engineer types a change in plain English — 'cap overdraft fees for Consumer Duty.' The agent finds every affected program, explains each in plain English, shows exactly what will break, and proposes the change — one reviewable step at a time. The engineer approves each step. The agent never changes anything on its own."
+3. **Product (20s) — what we built.** "This is shft. A graduate engineer types a change in plain English — 'cap overdraft fees for Consumer Duty.' The agent finds every affected program, explains each in plain English, shows exactly what will break, and proposes the change — one reviewable step at a time. The engineer approves each step. The agent never changes anything on its own."
 4. **Before/after (20s) — the live moment.** "What took a specialist weeks — [old way: backlog ticket, weeks, £550/day] — happens here in about thirty seconds. [Run the cells live.] Locate. Explain. Impact. Propose. Approve."
-5. **Differentiators (15s) — enterprise-real.** "Every change is recorded to a tamper-evident, optionally blockchain-anchored ledger — so an auditor can prove exactly what changed and who approved it. And it runs entirely on a local, on-premise model, so the bank's code never leaves the building."
-6. **Close (5s).** "Legacy Move: change your systems as fast as you change your mind — without losing control."
+5. **Differentiators (15s) — enterprise-real.** "Every change is recorded to a tamper-evident, optionally blockchain-anchored ledger — so an auditor can prove exactly what changed and who approved it. Parsing, the dependency graph, and the ledger run on-premise; the model itself can be deployed in the bank's own cloud under a zero-retention agreement."
+6. **Close (5s).** "shft: change your systems as fast as you change your mind — without losing control."
 
-**One-liner if you get one sentence:** *"We let the graduate engineer a bank can hire do the work of the COBOL veteran it can't — safely, step by step, with every change provable and the code never leaving the building."*
+**One-liner if you get one sentence:** *"We let the graduate engineer a bank can hire do the work of the COBOL veteran it can't — safely, step by step, with every change provable, governed, and auditable."*
 
 ---
 

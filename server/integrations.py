@@ -124,7 +124,7 @@ def build_message(event: str, data: dict) -> dict:
             _context("Tamper-EVIDENT: alteration cannot be prevented, but it can never go unnoticed."),
         ]
     else:
-        text = f"Legacy Move event: {event}"
+        text = f"shft event: {event}"
         blocks = [{"type": "section", "text": {"type": "mrkdwn", "text": text}}]
     return {"text": text, "blocks": blocks}
 

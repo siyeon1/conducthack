@@ -1,4 +1,4 @@
-# Legacy Move — AI Change Cockpit for Legacy COBOL
+# shft — AI Change Cockpit for Legacy COBOL
 
 A human-in-the-loop agent that lets a *new-joiner engineer* safely make a business-driven
 change to a legacy COBOL banking system: it **locates** every affected program/copybook,

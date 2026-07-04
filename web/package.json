@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "Legacy Move — Change Cockpit (Track C frontend)",
+  "description": "shft — Change Cockpit (Track C frontend)",
   "scripts": {
     "dev": "vite --port 5173",
     "build": "vite build",

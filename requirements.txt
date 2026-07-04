@@ -1,4 +1,4 @@
-# Legacy Move — Python dependencies
+# shft — Python dependencies
 # ---- FROZEN PINS (do NOT change without lead sign-off — see Claude.MD §15) ----
 langgraph==1.2.7                      # NOT 1.1.x (interrupt/checkpoint regression #7361)
 langgraph-checkpoint-sqlite==3.1.0    # AsyncSqliteSaver; requires aiosqlite
