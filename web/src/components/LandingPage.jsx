@@ -1,7 +1,7 @@
-// LandingPage.jsx — the pitch page shown before the cockpit. Written for a lay audience
-// (the hackathon finals present at the House of Lords): analogy-first, regulator-sourced
-// numbers only, problem → stakes → solution → proof. All stats are cited inline; the
-// folklore COBOL numbers (220bn/800bn lines etc.) are deliberately absent.
+// LandingPage.jsx — the pitch page, set in the shft brand system (brand kit v1.0):
+// dark hero (the kit's one confident dark section) → regulator-sourced proof strip →
+// plain-English steps → human-in-control → provable-not-promised → why-not-a-chatbot →
+// regulatory map → the signature line. Copy anchored in FCA/PRA figures only.
 const STATS = [
   {
     big: "£48.65m",
@@ -45,178 +45,216 @@ const REG_MAP = [
 
 export default function LandingPage({ onEnter }) {
   return (
-    <div className="mx-auto max-w-4xl px-5 pb-24 pt-16 sm:px-8">
-      {/* ---------- HERO ---------- */}
-      <header className="mb-14 text-center">
-        <div className="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-sky-500 text-2xl shadow-xl shadow-indigo-900/40">
-          🛰️
-        </div>
-        <h1 className="mx-auto max-w-2xl text-4xl font-bold leading-tight tracking-tight text-slate-50 sm:text-5xl">
-          You can&rsquo;t close a bank to fix it.
-        </h1>
-        <p className="mx-auto mt-5 max-w-2xl text-lg leading-relaxed text-slate-300">
-          Britain&rsquo;s banks run on code written before the moon landing. <span className="font-semibold text-slate-100">Legacy Move</span>{" "}
-          lets engineers change it safely while the bank keeps running — AI does the reading,{" "}
-          <span className="font-semibold text-slate-100">a named human signs every change</span>.
-        </p>
-        <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-          <button
-            type="button"
-            onClick={onEnter}
-            className="rounded-xl bg-indigo-500 px-6 py-3 text-base font-semibold text-white shadow-lg shadow-indigo-900/40 transition hover:bg-indigo-400"
-          >
-            Enter the cockpit →
-          </button>
-          <span className="text-xs text-slate-500">Live demo on IBM&rsquo;s own sample banking system (CBSA).</span>
+    <div className="min-h-full">
+      {/* ---------- HERO — the one confident dark section ---------- */}
+      <header className="bg-hero text-white">
+        <div className="mx-auto max-w-5xl px-5 pb-16 pt-14 sm:px-8">
+          <div className="mb-10 flex items-center justify-between">
+            <span className="wordmark text-3xl text-brand-400">shft</span>
+            <span className="badge b-brand">✦ governed change · not autonomous AI</span>
+          </div>
+
+          <div className="grid items-center gap-10 lg:grid-cols-[1.2fr_0.8fr]">
+            <div>
+              <h1 className="font-sans text-4xl font-extrabold leading-[1.05] tracking-display sm:text-5xl">
+                Change the code that runs banks — and prove you did it right.
+              </h1>
+              <p className="mt-5 max-w-xl text-lg leading-relaxed text-white/70">
+                Plain-English in. A verified, human-approved, tamper-evident change out. Every claim graded
+                against the real source.
+              </p>
+              <div className="mt-8 flex flex-wrap items-center gap-3">
+                <button type="button" onClick={onEnter} className="btn btn-primary">
+                  See the proof →
+                </button>
+                <span className="text-xs text-white/40">
+                  Live demo on IBM&rsquo;s own sample banking system (CBSA).
+                </span>
+              </div>
+            </div>
+
+            {/* Mini ledger proof card (the kit's hero visual) */}
+            <div className="rounded-xl border border-white/10 bg-white/[0.04] p-4 font-mono text-[12.5px]">
+              <div className="mb-3 flex items-center justify-between">
+                <span className="badge b-verified">✓ Verified · parsed</span>
+                <span className="text-white/40">ledger · entry #4</span>
+              </div>
+              {[
+                ["intent", "cap overdraft fee · XFRFUN"],
+                ["approver", "engineer@bank"],
+                ["rationale", "mirrors MORTGAGE/LOAN guard"],
+                ["entry_hash", "a1b2c3d4e5f6…"],
+              ].map(([k, v]) => (
+                <div key={k} className="flex justify-between gap-4 border-t border-white/10 py-1.5">
+                  <span className="text-white/40">{k}</span>
+                  <span className="truncate text-white/85">{v}</span>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </header>
 
-      {/* ---------- STAT STRIP ---------- */}
-      <section className="mb-14 grid gap-3 sm:grid-cols-3">
-        {STATS.map((s) => (
-          <div key={s.big} className="rounded-2xl border border-slate-700/60 bg-ink-900/60 p-5 text-center shadow-xl shadow-black/20">
-            <div className="text-3xl font-bold text-slate-50">{s.big}</div>
-            <p className="mt-2 text-[13px] leading-relaxed text-slate-300">{s.text}</p>
-            <p className="mt-2 text-[10px] uppercase tracking-wider text-slate-500">{s.source}</p>
-          </div>
-        ))}
-      </section>
-
-      {/* ---------- HOW IT WORKS ---------- */}
-      <section className="mb-14">
-        <h2 className="mb-6 text-center text-2xl font-bold text-slate-100">How it works</h2>
-        <div className="space-y-4">
-          <Step n="1" title="Say what needs to change, in plain English.">
-            &ldquo;Cap overdraft fees to comply with Consumer Duty.&rdquo; Legacy Move reads the actual source code — sixty years of it
-            — and breaks the request into a handful of small, ordered steps you can see on one screen. Every connection between
-            steps is labelled: <b className="text-emerald-300">verified</b> against the real code, or merely{" "}
-            <b className="text-amber-300">suggested</b> by the AI. You always know which is which.
-          </Step>
-          <Step n="2" title="Approve the plan before anything happens.">
-            The plan opens as a draft. An engineer can rename, re-order or delete any step. Nothing — nothing — executes until they
-            click Approve. <i className="text-slate-200">The machine proposes; the person disposes.</i>
-          </Step>
-          <Step n="3" title="Make each change with your hands on the controls.">
-            For every step, the cockpit shows exactly which lines are involved, explains the old code in plain English, maps the
-            blast radius — every program the change could touch — and drafts the smallest possible edit. The engineer accepts it,
-            rejects it, or rewrites it by hand. Then they sign their reason.
-          </Step>
-        </div>
-      </section>
-
-      {/* ---------- HUMAN IN CONTROL ---------- */}
-      <section className="mb-14 rounded-2xl border border-slate-700/60 bg-ink-900/60 p-7 shadow-xl shadow-black/20">
-        <h2 className="text-xl font-bold text-slate-100">&ldquo;The AI never touches the code. People do.&rdquo;</h2>
-        <p className="mt-3 text-[15px] leading-relaxed text-slate-300">
-          There is <b className="text-slate-100">no deploy button</b> in this product. It reads code and proposes; a named engineer
-          edits, accepts or rejects. Every claim the AI makes is labelled <b className="text-emerald-300">verified</b> — checked
-          against the real, parsed structure of the code — or <b className="text-amber-300">inferred</b> — its best guess, flagged
-          as such. Engineers trust the machine exactly as much as it deserves, and no more.
-        </p>
-        <p className="mt-3 text-[15px] leading-relaxed text-slate-300">
-          The UK chose to govern AI through human accountability. Europe wrote human oversight into law.{" "}
-          <b className="text-slate-100">We built both into the software</b>: the person who approves a change is named, their
-          reasoning is recorded, and they could defend every decision to their regulator tomorrow morning.
-        </p>
-      </section>
-
-      {/* ---------- PROVABLE ---------- */}
-      <section className="mb-14 rounded-2xl border border-emerald-500/30 bg-emerald-500/[0.05] p-7">
-        <h2 className="text-xl font-bold text-emerald-200">&ldquo;An audit trail you can test, not just read.&rdquo;</h2>
-        <p className="mt-3 text-[15px] leading-relaxed text-slate-300">
-          Every approval — the change, the person, the reason, the timestamp — is sealed into a cryptographic chain, each record
-          locked to the one before it. Alter a single word of the history and verification fails, visibly, immediately. Most audit
-          trails are promises. <b className="text-emerald-200">This one is a proof.</b> For a Senior Manager who is personally
-          accountable under UK law, that is the difference between &ldquo;we believe we took reasonable steps&rdquo; and{" "}
-          <b className="text-emerald-200">&ldquo;here is the evidence that we did.&rdquo;</b>
-        </p>
-      </section>
-
-      {/* ---------- WHY NOT A CHATBOT ---------- */}
-      <section className="mb-14">
-        <h2 className="mb-2 text-center text-2xl font-bold text-slate-100">&ldquo;A chatbot gives you an answer. We give you evidence.&rdquo;</h2>
-        <p className="mx-auto mb-6 max-w-2xl text-center text-sm text-slate-400">
-          Why not just buy the team an AI subscription? Because a subscription gives every engineer a brilliant intern —{" "}
-          <b className="text-slate-200">Legacy Move gives the bank a governed change process with proof.</b>
-        </p>
-        <div className="grid gap-3 sm:grid-cols-3">
-          <FactCard big="19.7%" text="of dependencies suggested by code LLMs are hallucinated — invented names asserted with full confidence." source="USENIX Security 2025, 576k samples" />
-          <FactCard big="45%" text="of the time, LLMs chose the insecure implementation of a coding task. Newer models were no better." source="Veracode GenAI report, 2025" />
-          <FactCard big="10.27%" text="GPT-4's score on COBOL programming tasks — versus 67% on Python. General AI does not know COBOL." source="COBOLEval, 2024" />
-        </div>
-        <blockquote className="mx-auto mt-6 max-w-2xl rounded-xl border border-slate-700/60 bg-ink-950/50 p-5 text-[14px] leading-relaxed text-slate-300">
-          GitHub&rsquo;s own documentation: the Copilot Enterprise audit log{" "}
-          <i>&ldquo;does not include client session data, such as the prompts a user sends&rdquo;</i> — retained 180 days.
-          <span className="mt-2 block font-semibold text-slate-100">
-            When the regulator asks why the overdraft logic changed, a licence log is not an answer. A hash-chained record of who
-            approved what, why, and on what verified evidence — is.
-          </span>
-        </blockquote>
-        <p className="mx-auto mt-4 max-w-2xl text-center text-[13px] text-slate-400">
-          Every funded competitor sells the <i>exit</i> from COBOL — the multi-year migration that most firms start and never
-          finish. Legacy Move is for the decades in between: <b className="text-slate-200">changing the code you keep. Safely. In place.</b>
-        </p>
-      </section>
-
-      {/* ---------- REGULATORY MAP ---------- */}
-      <section className="mb-14">
-        <h2 className="mb-5 text-center text-2xl font-bold text-slate-100">Built for the rules banks already live under</h2>
-        <div className="overflow-hidden rounded-2xl border border-slate-700/60">
-          {REG_MAP.map((r, i) => (
-            <div key={r.reg} className={`grid gap-1 p-4 sm:grid-cols-[200px_1fr] ${i % 2 ? "bg-ink-900/40" : "bg-ink-950/40"}`}>
-              <div className="text-sm font-semibold text-indigo-300">{r.reg}</div>
-              <div>
-                <p className="text-[13px] text-slate-400">{r.demand}</p>
-                <p className="mt-0.5 text-[13px] text-slate-200">→ {r.us}</p>
-              </div>
+      <main className="mx-auto max-w-4xl px-5 pb-24 sm:px-8">
+        {/* ---------- STAT STRIP ---------- */}
+        <section className="-mt-8 mb-16 grid gap-3 sm:grid-cols-3">
+          {STATS.map((s) => (
+            <div key={s.big} className="rounded-xl border border-line bg-paper-light p-5 text-center shadow-card">
+              <div className="font-sans text-3xl font-extrabold tracking-display text-brand-500">{s.big}</div>
+              <p className="mt-2 text-[13px] leading-relaxed text-ink-soft">{s.text}</p>
+              <p className="eyebrow mt-3 text-ink-mute">{s.source}</p>
             </div>
           ))}
-        </div>
-      </section>
+        </section>
 
-      {/* ---------- SIGNATURE LINE ---------- */}
-      <section className="mb-14 text-center">
-        <p className="mx-auto max-w-2xl text-lg font-medium leading-relaxed text-slate-200">
-          &ldquo;You restore a listed building under consent: survey first, small documented alterations, a named person approving
-          each one, everything in the register.
-        </p>
-        <p className="mx-auto mt-2 max-w-2xl text-lg font-bold leading-relaxed text-slate-50">
-          We built listed-building consent for the code that runs Britain&rsquo;s banks.&rdquo;
-        </p>
-      </section>
+        {/* ---------- HOW IT WORKS ---------- */}
+        <section className="mb-16">
+          <h2 className="mb-6 text-center font-sans text-2xl font-bold tracking-tight text-ink">How it works</h2>
+          <div className="space-y-4">
+            <Step n="1" title="Say what needs to change, in plain English.">
+              &ldquo;Cap overdraft fees to comply with Consumer Duty.&rdquo; shft reads the actual source code —
+              sixty years of it — and breaks the request into a handful of small, ordered steps you can see on
+              one screen. Every connection between steps is labelled: <b className="text-verified">verified</b>{" "}
+              against the real code, or merely <b className="text-[#8A6410]">suggested</b> by the AI. You always
+              know which is which.
+            </Step>
+            <Step n="2" title="Approve the plan before anything happens.">
+              The plan opens as a draft. An engineer can rename, re-order or delete any step. Nothing — nothing —
+              executes until they click Approve. <i className="text-ink">The machine proposes; the person disposes.</i>
+            </Step>
+            <Step n="3" title="Make each change with your hands on the controls.">
+              For every step, the cockpit shows exactly which lines are involved, explains the old code in plain
+              English, maps the blast radius — every program the change could touch — and drafts the smallest
+              possible edit. The engineer accepts it, rejects it, or rewrites it by hand. Then they sign their
+              reason.
+            </Step>
+          </div>
+        </section>
 
-      {/* ---------- CLOSING CTA ---------- */}
-      <section className="text-center">
-        <h2 className="text-xl font-bold text-slate-100">The banks that run Britain were built to last. Help them change safely.</h2>
-        <p className="mx-auto mt-2 max-w-xl text-sm text-slate-400">
-          Watch a real sixty-year-old banking system get a real regulatory change — planned, approved, applied and sealed into the
-          record.
-        </p>
-        <button
-          type="button"
-          onClick={onEnter}
-          className="mt-6 rounded-xl bg-indigo-500 px-6 py-3 text-base font-semibold text-white shadow-lg shadow-indigo-900/40 transition hover:bg-indigo-400"
-        >
-          Enter the cockpit →
-        </button>
-        <p className="mt-8 text-[11px] text-slate-600">
-          Built at the UK AI Agent Hack × Conduct.AI · demo corpus: IBM&rsquo;s CICS Banking Sample Application ·
-          proposal-only by design — Legacy Move has no write access to source or production.
-        </p>
-      </section>
+        {/* ---------- HUMAN IN CONTROL ---------- */}
+        <section className="mb-16 rounded-2xl border border-line bg-paper-light p-7 shadow-card">
+          <h2 className="font-sans text-xl font-bold text-ink">&ldquo;The AI never touches the code. People do.&rdquo;</h2>
+          <p className="mt-3 text-[15px] leading-relaxed text-ink-soft">
+            There is <b className="text-ink">no deploy button</b> in this product. It reads code and proposes; a
+            named engineer edits, accepts or rejects. Every claim the AI makes is labelled{" "}
+            <span className="badge b-verified">✓ Verified · parsed</span> — checked against the real, parsed
+            structure of the code — or <span className="badge b-inferred">~ Inferred · LLM</span> — its best
+            guess, flagged as such. Engineers trust the machine exactly as much as it deserves, and no more.
+          </p>
+          <p className="mt-3 text-[15px] leading-relaxed text-ink-soft">
+            The UK chose to govern AI through human accountability. Europe wrote human oversight into law.{" "}
+            <b className="text-ink">We built both into the software</b>: the person who approves a change is
+            named, their reasoning is recorded, and they could defend every decision to their regulator tomorrow
+            morning.
+          </p>
+        </section>
+
+        {/* ---------- PROVABLE ---------- */}
+        <section className="mb-16 rounded-2xl border border-verified/30 bg-verified-tint/60 p-7">
+          <h2 className="font-sans text-xl font-bold text-verified">
+            &ldquo;An audit trail you can test, not just read.&rdquo;
+          </h2>
+          <p className="mt-3 text-[15px] leading-relaxed text-ink-soft">
+            Every approval — the change, the person, the reason, the timestamp — is sealed into a cryptographic
+            chain, each record locked to the one before it. Alter a single word of the history and verification
+            fails, visibly, immediately. Most audit trails are promises.{" "}
+            <b className="text-verified">This one is a proof.</b> For a Senior Manager who is personally
+            accountable under UK law, that is the difference between &ldquo;we believe we took reasonable
+            steps&rdquo; and <b className="text-verified">&ldquo;here is the evidence that we did.&rdquo;</b>
+          </p>
+        </section>
+
+        {/* ---------- WHY NOT A CHATBOT ---------- */}
+        <section className="mb-16">
+          <h2 className="mb-2 text-center font-sans text-2xl font-bold tracking-tight text-ink">
+            &ldquo;A chatbot gives you an answer. We give you evidence.&rdquo;
+          </h2>
+          <p className="mx-auto mb-6 max-w-2xl text-center text-sm text-ink-soft">
+            Why not just buy the team an AI subscription? Because a subscription gives every engineer a brilliant
+            intern — <b className="text-ink">shft gives the bank a governed change process with proof.</b>
+          </p>
+          <div className="grid gap-3 sm:grid-cols-3">
+            <FactCard big="19.7%" text="of dependencies suggested by code LLMs are hallucinated — invented names asserted with full confidence." source="USENIX Security 2025, 576k samples" />
+            <FactCard big="45%" text="of the time, LLMs chose the insecure implementation of a coding task. Newer models were no better." source="Veracode GenAI report, 2025" />
+            <FactCard big="10.27%" text="GPT-4's score on COBOL programming tasks — versus 67% on Python. General AI does not know COBOL." source="COBOLEval, 2024" />
+          </div>
+          <blockquote className="mx-auto mt-6 max-w-2xl rounded-xl border border-line bg-paper-light p-5 text-[14px] leading-relaxed text-ink-soft shadow-card">
+            GitHub&rsquo;s own documentation: the Copilot Enterprise audit log{" "}
+            <i>&ldquo;does not include client session data, such as the prompts a user sends&rdquo;</i> — retained
+            180 days.
+            <span className="mt-2 block font-semibold text-ink">
+              When the regulator asks why the overdraft logic changed, a licence log is not an answer. A
+              hash-chained record of who approved what, why, and on what verified evidence — is.
+            </span>
+          </blockquote>
+          <p className="mx-auto mt-4 max-w-2xl text-center text-[13px] text-ink-soft">
+            Every funded competitor sells the <i>exit</i> from COBOL — the multi-year migration most firms start
+            and never finish. <b className="text-ink">A shift, not a rewrite</b>: shft is for the decades in
+            between — changing the code you keep. Safely. In place.
+          </p>
+        </section>
+
+        {/* ---------- REGULATORY MAP ---------- */}
+        <section className="mb-16">
+          <h2 className="mb-5 text-center font-sans text-2xl font-bold tracking-tight text-ink">
+            Built for the rules banks already live under
+          </h2>
+          <div className="overflow-hidden rounded-2xl border border-line shadow-card">
+            {REG_MAP.map((r, i) => (
+              <div key={r.reg} className={`grid gap-1 p-4 sm:grid-cols-[210px_1fr] ${i % 2 ? "bg-paper" : "bg-paper-light"}`}>
+                <div className="text-sm font-semibold text-brand-700">{r.reg}</div>
+                <div>
+                  <p className="text-[13px] text-ink-mute">{r.demand}</p>
+                  <p className="mt-0.5 text-[13px] text-ink-soft">→ {r.us}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* ---------- SIGNATURE LINE ---------- */}
+        <section className="mb-16 text-center">
+          <p className="mx-auto max-w-2xl text-lg font-medium leading-relaxed text-ink-soft">
+            &ldquo;You restore a listed building under consent: survey first, small documented alterations, a
+            named person approving each one, everything in the register.
+          </p>
+          <p className="mx-auto mt-2 max-w-2xl font-sans text-lg font-extrabold leading-relaxed tracking-tight text-ink">
+            We built listed-building consent for the code that runs Britain&rsquo;s banks.&rdquo;
+          </p>
+        </section>
+
+        {/* ---------- CLOSING CTA ---------- */}
+        <section className="text-center">
+          <h2 className="font-sans text-xl font-bold text-ink">
+            The banks that run Britain were built to last. Help them change safely.
+          </h2>
+          <p className="mx-auto mt-2 max-w-xl text-sm text-ink-soft">
+            Watch a real sixty-year-old banking system get a real regulatory change — planned, approved, applied
+            and sealed into the record.
+          </p>
+          <button type="button" onClick={onEnter} className="btn btn-primary mt-6">
+            See the proof →
+          </button>
+          <p className="mt-10 text-[11px] text-ink-mute">
+            <span className="wordmark text-ink-soft">shft</span> · a shift, not a rewrite · built at the UK AI
+            Agent Hack × Conduct.AI · demo corpus: IBM&rsquo;s CICS Banking Sample Application · proposal-only by
+            design — no write access to source or production.
+          </p>
+        </section>
+      </main>
     </div>
   );
 }
 
 function Step({ n, title, children }) {
   return (
-    <div className="flex gap-4 rounded-2xl border border-slate-700/60 bg-ink-900/50 p-5">
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-indigo-500/15 text-base font-bold text-indigo-300">
+    <div className="flex gap-4 rounded-2xl border border-line bg-paper-light p-5 shadow-card">
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-100 font-sans text-base font-bold text-brand-700">
         {n}
       </div>
       <div>
-        <h3 className="text-base font-semibold text-slate-100">{title}</h3>
-        <p className="mt-1.5 text-[14px] leading-relaxed text-slate-400">{children}</p>
+        <h3 className="font-sans text-base font-semibold text-ink">{title}</h3>
+        <p className="mt-1.5 text-[14px] leading-relaxed text-ink-soft">{children}</p>
       </div>
     </div>
   );
@@ -224,10 +262,10 @@ function Step({ n, title, children }) {
 
 function FactCard({ big, text, source }) {
   return (
-    <div className="rounded-2xl border border-slate-700/60 bg-ink-900/50 p-5 text-center">
-      <div className="text-2xl font-bold text-rose-300">{big}</div>
-      <p className="mt-2 text-[13px] leading-relaxed text-slate-300">{text}</p>
-      <p className="mt-2 text-[10px] uppercase tracking-wider text-slate-500">{source}</p>
+    <div className="rounded-xl border border-line bg-paper-light p-5 text-center shadow-card">
+      <div className="font-sans text-2xl font-extrabold tracking-display text-magenta-700">{big}</div>
+      <p className="mt-2 text-[13px] leading-relaxed text-ink-soft">{text}</p>
+      <p className="eyebrow mt-3 text-ink-mute">{source}</p>
     </div>
   );
 }

@@ -1,9 +1,59 @@
+@import "./fonts.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* shft brand tokens — brand kit v1.0 (verbatim). The Tailwind theme mirrors these; the raw
+   variables exist so hand-written CSS and CodeMirror themes share the same source of truth. */
 :root {
-  color-scheme: dark;
+  color-scheme: light;
+  /* brand — Shift Purple */
+  --shft-50: #f6e9fc;
+  --shft-100: #efdaf8;
+  --shft-200: #e0b8f1;
+  --shft-400: #bc4ae3;
+  --shft-500: #9400d3;
+  --shft-700: #6d00a0;
+  --shft-900: #3b0059;
+  /* accent — Signal Coral */
+  --coral-tint: #fbddf6;
+  --coral-400: #ed80e9;
+  --coral-600: #c64ddb;
+  --magenta-700: #b5259f;
+  /* neutrals — warm violet-grey */
+  --ink: #0b0b10;
+  --ink-soft: #4a4652;
+  --ink-mute: #9a96a3;
+  --line: #e7e0ee;
+  --paper: #f7f5fe;
+  --paper-light: #fcfbff;
+  --paper-dark: #e6dbee;
+  --lavender: #d3d3ff;
+  /* signal — trust states */
+  --verified: #1c7c46;
+  --verified-tint: #e7f3cf;
+  --inferred: #b58318;
+  --inferred-tint: #f4e6bf;
+  --danger: #d93a56;
+  --danger-tint: #fbd6dc;
+  /* type */
+  --font-sans: "General Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  /* radius */
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 16px;
+  --r-xl: 20px;
+  --r-2xl: 28px;
+  --r-pill: 999px;
+  /* elevation */
+  --shadow-card: 0 1px 2px rgba(11, 11, 16, 0.04), 0 18px 40px -24px rgba(11, 11, 16, 0.32);
+  --shadow-pop: 0 12px 44px -8px rgba(11, 11, 16, 0.3);
+  /* motion */
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --dur-micro: 150ms;
+  --dur-enter: 250ms;
 }
 
 html,
@@ -14,36 +64,145 @@ body,
 
 body {
   margin: 0;
-  background-color: #0b1120;
-  background-image: radial-gradient(
-      1200px 600px at 15% -10%,
-      rgba(79, 70, 229, 0.14),
-      transparent 60%
-    ),
-    radial-gradient(
-      1000px 500px at 100% 0%,
-      rgba(56, 189, 248, 0.08),
-      transparent 55%
-    );
-  color: #e2e8f0;
-  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
-    Helvetica, Arial, sans-serif;
+  background-color: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
 }
 
-/* Slim, dark scrollbars for the enterprise look. */
+/* Slim, light scrollbars. */
 * {
   scrollbar-width: thin;
-  scrollbar-color: #334155 transparent;
+  scrollbar-color: var(--paper-dark) transparent;
 }
 *::-webkit-scrollbar {
   height: 8px;
   width: 8px;
 }
 *::-webkit-scrollbar-thumb {
-  background: #334155;
+  background: var(--paper-dark);
   border-radius: 999px;
 }
 *::-webkit-scrollbar-track {
   background: transparent;
+}
+
+/* Component kit — lifted straight from the brand kit so brand and app never drift apart. */
+@layer components {
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    font-weight: 600;
+    font-size: 14px;
+    border-radius: var(--r-md);
+    padding: 11px 18px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: var(--dur-micro) var(--ease);
+    white-space: nowrap;
+  }
+  .btn-primary {
+    background: var(--shft-500);
+    color: #fff;
+  }
+  .btn-primary:hover {
+    background: var(--shft-700);
+  }
+  .btn-primary:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+  .btn-ghost {
+    background: var(--paper-light);
+    color: var(--ink);
+    border-color: var(--line);
+  }
+  .btn-ghost:hover {
+    background: var(--paper-dark);
+  }
+  .btn-coral {
+    background: var(--coral-tint);
+    color: var(--magenta-700);
+    border-color: rgba(237, 128, 233, 0.45);
+  }
+  .btn-coral:hover {
+    background: #f7cbf1;
+  }
+  .btn-verified {
+    background: var(--verified);
+    color: #fff;
+  }
+  .btn-verified:hover {
+    background: #176437;
+  }
+  .btn-verified:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+  .btn-danger {
+    background: var(--danger-tint);
+    color: #b02138;
+    border-color: rgba(217, 58, 86, 0.3);
+  }
+  .btn-danger:hover {
+    background: #f7c2cb;
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    border-radius: var(--r-pill);
+    padding: 4px 11px;
+    border: 1px solid;
+  }
+  .b-verified {
+    color: var(--verified);
+    background: var(--verified-tint);
+    border-color: rgba(28, 124, 70, 0.28);
+  }
+  .b-inferred {
+    color: #8a6410;
+    background: var(--inferred-tint);
+    border-color: rgba(181, 131, 24, 0.35);
+  }
+  .b-danger {
+    color: #b02138;
+    background: var(--danger-tint);
+    border-color: rgba(217, 58, 86, 0.3);
+  }
+  .b-brand {
+    color: var(--shft-700);
+    background: var(--shft-100);
+    border-color: rgba(148, 0, 211, 0.3);
+  }
+  .b-neutral {
+    color: var(--ink-soft);
+    background: var(--paper-dark);
+    border-color: var(--line);
+  }
+
+  /* The wordmark: lowercase, General Sans 800 (falls back from the 700 face, as in the kit),
+     tracking -0.05em. The logo is the word itself — no symbol, no icon. */
+  .wordmark {
+    font-family: var(--font-sans);
+    font-weight: 800;
+    letter-spacing: -0.05em;
+    line-height: 0.9;
+    text-transform: lowercase;
+  }
+
+  /* Mono eyebrow/label: JetBrains Mono, uppercase, tracked +0.14em. */
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
 }
