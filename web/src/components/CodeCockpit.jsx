@@ -8,6 +8,7 @@ import { RangeSetBuilder } from "@codemirror/state";
 import { createTwoFilesPatch } from "diff";
 import { getSource } from "../api.js";
 import AffectedList from "./AffectedList.jsx";
+import GraphView from "./GraphView.jsx";
 import { VerifiedBadge } from "./Badge.jsx";
 
 // Level-2, code-editor view: a collapsible analysis rail (Locate/Explain/Impact) on the left, and a
@@ -60,6 +61,8 @@ const DOT = {
   done: "bg-emerald-400",
   error: "bg-rose-400",
   awaiting_approval: "bg-amber-400 animate-pulse",
+  approved: "bg-emerald-400",
+  rejected: "bg-rose-400",
 };
 
 function programFromDiff(diff) {
@@ -315,6 +318,18 @@ export default function CodeCockpit({ ctx, onOpenSource }) {
                 Blast radius: {(state && state.graph && state.graph.nodes && state.graph.nodes.length) || 0} nodes ·{" "}
                 {(state && state.graph && state.graph.edges && state.graph.edges.length) || 0} edges
               </p>
+              {state && state.graph && state.graph.nodes && state.graph.nodes.length > 0 && (
+                <div className="mb-2">
+                  <GraphView
+                    graph={state.graph}
+                    highlight={node.edit_sites || []}
+                    onNodeClick={(n) => onOpenSource(n)}
+                  />
+                  <p className="mt-1 text-[10px] text-slate-600">
+                    scroll → · click a node to read its source · full size in the Notebook view
+                  </p>
+                </div>
+              )}
               <AffectedList affected={impact.payload.affected} />
             </>
           ) : (
@@ -322,16 +337,53 @@ export default function CodeCockpit({ ctx, onOpenSource }) {
           )}
         </Step>
 
-        {recordEntry && (
-          <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/[0.06] px-3 py-2.5 text-[13px]">
-            <div className="flex items-center gap-2 font-semibold text-emerald-200">
-              <span>⛓</span> Recorded to the ledger
+        <Step n={4} title="Propose" statusValue={status("propose")} running={running.propose} canRun onRun={() => handleRun("propose")} open={open === "propose"} onToggle={() => toggle("propose")}>
+          {proposeCell.status === "approved" ? (
+            <p className="text-[13px] text-emerald-300">✓ Accepted and recorded.</p>
+          ) : proposeCell.status === "rejected" ? (
+            <p className="text-[13px] text-rose-300">✕ Denied — nothing was applied. Re-run to draft a different change.</p>
+          ) : gateOpen ? (
+            <>
+              {proposeCell.payload && proposeCell.payload.explanation && (
+                <p className="mb-2 line-clamp-4 text-[13px] leading-relaxed text-slate-400">
+                  {proposeCell.payload.explanation}
+                </p>
+              )}
+              <p className="text-[13px] text-amber-300">
+                ✦ Suggestion drafted — <b>review it inline in the editor →</b> accept the hunk, edit the
+                code, or deny. Recording requires a typed justification.
+              </p>
+            </>
+          ) : (
+            <p className="text-xs text-slate-500">
+              Drafts the minimal change for this file — you review it in the editor pane before anything
+              is recorded.
+            </p>
+          )}
+        </Step>
+
+        <Step n={5} title="Record" statusValue={status("record")} running={false} canRun={false} open={open === "record"} onToggle={() => toggle("record")}>
+          {recordEntry ? (
+            <div className="space-y-1.5 text-[13px]">
+              <div className="flex items-center gap-2 font-semibold text-emerald-200">
+                <span>⛓</span> Recorded — tamper-evident
+              </div>
+              <div className="text-slate-400">
+                Decision: <span className="font-mono text-slate-300">{recordEntry.decision}</span> · Approver:{" "}
+                <span className="font-mono text-slate-300">{recordEntry.approver}</span>
+              </div>
+              <div className="truncate font-mono text-[11px] text-slate-500" title={recordEntry.entry_hash}>
+                entry {String(recordEntry.entry_hash).slice(0, 18)}…
+              </div>
+              {recordEntry.rationale && <p className="italic text-slate-400">“{recordEntry.rationale}”</p>}
             </div>
-            <div className="mt-1 truncate font-mono text-[11px] text-slate-400" title={recordEntry.entry_hash}>
-              entry {String(recordEntry.entry_hash).slice(0, 18)}…
-            </div>
-          </div>
-        )}
+          ) : (
+            <p className="text-xs text-slate-500">
+              Writes the approved change to the tamper-evident ledger. Writes only on approval.
+            </p>
+          )}
+        </Step>
+
       </aside>
 
       {/* RIGHT — code editor */}
