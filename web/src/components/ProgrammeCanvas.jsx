@@ -13,6 +13,18 @@ import StatusNode from "./StatusNode.jsx";
 import ProgrammeLedger from "./ProgrammeLedger.jsx";
 import IntegrationsPanel from "./IntegrationsPanel.jsx";
 import { layoutProgramme } from "../programme.js";
+import { useTypewriterPlaceholder } from "../useTypewriter.js";
+
+// Cycled as typewriter suggestions in the change-request bar. Every one is live-verified to
+// produce a good custom decomposition on the CBSA corpus — anything a viewer sees suggested
+// will genuinely work if typed (the generality of the product, made discoverable).
+const SUGGESTED_PROMPTS = [
+  "Cap overdraft fees to comply with FCA Consumer Duty",
+  "Add a daily ATM withdrawal limit check to the account debit path",
+  "Require two-person approval for transfers over £10,000",
+  "Add a dormant-account flag that blocks debits after 12 months of inactivity",
+  "Add audit logging whenever an account interest rate is changed",
+];
 
 const nodeTypes = { stage: StatusNode };
 
@@ -52,9 +64,23 @@ export default function ProgrammeCanvas({
   onLoad,
   onDeleteSaved,
 }) {
-  const [req, setReq] = useState(programme.title || "");
+  // Starts EMPTY (not pre-filled with the seed title) so the typewriter suggestions are visible.
+  const [req, setReq] = useState("");
+  const [reqFocused, setReqFocused] = useState(false);
   const [showLibrary, setShowLibrary] = useState(false);
   const [showIntegrations, setShowIntegrations] = useState(false);
+
+  // Typewriter suggestions cycle while the bar is empty and unfocused; on focus they stop and
+  // freeze into a static "Press Tab for: …" hint (Tab accepts, typing dismisses).
+  const { placeholder: animatedPlaceholder, suggestion } = useTypewriterPlaceholder(SUGGESTED_PROMPTS, {
+    active: !reqFocused && !req && !generating,
+    fallback: "",
+  });
+  const reqPlaceholder = !req
+    ? reqFocused && suggestion
+      ? `Press Tab for: “${suggestion}” — or type your own`
+      : animatedPlaceholder || "Describe a compliance / behaviour change in plain English…"
+    : "";
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [selectedId, setSelectedId] = useState(null);
@@ -280,8 +306,18 @@ export default function ProgrammeCanvas({
               type="text"
               value={req}
               onChange={(e) => setReq(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && submit()}
-              placeholder="Describe a compliance / behaviour change in plain English…"
+              onFocus={() => setReqFocused(true)}
+              onBlur={() => setReqFocused(false)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") submit();
+                // Tab-to-accept: only while the bar is empty — with content, Tab keeps its
+                // normal focus-move behaviour (accessibility).
+                if (e.key === "Tab" && !req.trim() && suggestion) {
+                  e.preventDefault();
+                  setReq(suggestion);
+                }
+              }}
+              placeholder={reqPlaceholder}
               disabled={generating}
               className="flex-1 rounded-lg border border-slate-600/60 bg-ink-950/70 px-3.5 py-2.5 text-sm text-slate-100 placeholder-slate-500 outline-none transition focus:border-indigo-500/70 focus:ring-2 focus:ring-indigo-500/20 disabled:opacity-60"
             />
