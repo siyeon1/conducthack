@@ -1,8 +1,8 @@
 // GraphView.jsx — the blast-radius dependency graph, hand-rolled as a tidy SVG
 // (no heavy graph lib). Nodes are laid out in three tiers (callers → programs →
-// records/copybooks). Solid line = verified (parsed) edge; dashed amber = inferred.
+// records/copybooks). Solid green = verified (parsed) edge; dashed gold = inferred.
 // Edge kind is on hover (labels dropped for legibility); edges off the edit site are
-// dimmed. Nodes are clickable via onNodeClick(name, role).
+// dimmed. Nodes are clickable via onNodeClick(name, role). shft trust palette.
 
 const NODE_W = 132;
 const NODE_H = 46;
@@ -11,9 +11,18 @@ const ROW_GAP_Y = 88;
 const PAD_X = 28;
 const PAD_Y = 26;
 
+// shft trust palette (hex, for the SVG). Verified green, inferred gold, danger red, brand purple.
+const C = {
+  verified: "#1C7C46",
+  inferred: "#B58318",
+  danger: "#D93A56",
+  brand: "#9400D3",
+  neutral: "#9A96A3",
+};
+
 function EmptyState() {
   return (
-    <div className="rounded-lg border border-dashed border-slate-700/60 bg-ink-950/40 px-4 py-10 text-center text-sm text-slate-500">
+    <div className="rounded-lg border border-dashed border-line bg-paper px-4 py-10 text-center text-sm text-ink-mute">
       Run Impact to map the blast radius.
     </div>
   );
@@ -61,20 +70,20 @@ export default function GraphView({ graph, highlight = [], onNodeClick }) {
   const nodeStyle = (n) => {
     const role = roleOf(n);
     if (hi.has(String(n).toUpperCase()))
-      return { fill: "rgba(244,63,94,0.14)", stroke: "#f43f5e", text: "#fecdd3", tag: "edit site" };
+      return { fill: "rgba(217,58,86,0.12)", stroke: C.danger, text: "#b02138", tag: "edit site" };
     if (role === "caller")
-      return { fill: "rgba(99,102,241,0.14)", stroke: "#6366f1", text: "#c7d2fe", tag: "caller" };
+      return { fill: "rgba(148,0,211,0.10)", stroke: C.brand, text: "#6D00A0", tag: "caller" };
     if (role === "record")
-      return { fill: "rgba(20,184,166,0.12)", stroke: "#2dd4bf", text: "#99f6e4", tag: "copybook" };
-    return { fill: "rgba(148,163,184,0.08)", stroke: "#64748b", text: "#cbd5e1", tag: "program" };
+      return { fill: "rgba(28,124,70,0.10)", stroke: C.verified, text: "#176437", tag: "copybook" };
+    return { fill: "rgba(154,150,163,0.10)", stroke: C.neutral, text: "#4A4652", tag: "program" };
   };
 
   return (
     <div>
-      <div className="mb-3 flex flex-wrap items-center gap-4 text-[11px] text-slate-400">
+      <div className="mb-3 flex flex-wrap items-center gap-4 text-[11px] text-ink-soft">
         <span className="inline-flex items-center gap-1.5">
           <svg width="26" height="8">
-            <line x1="0" y1="4" x2="26" y2="4" stroke="#64748b" strokeWidth="2" />
+            <line x1="0" y1="4" x2="26" y2="4" stroke={C.verified} strokeWidth="2" />
           </svg>
           verified edge
         </span>
@@ -85,7 +94,7 @@ export default function GraphView({ graph, highlight = [], onNodeClick }) {
               y1="4"
               x2="26"
               y2="4"
-              stroke="#f59e0b"
+              stroke={C.inferred}
               strokeWidth="2"
               strokeDasharray="5 4"
             />
@@ -93,16 +102,16 @@ export default function GraphView({ graph, highlight = [], onNodeClick }) {
           inferred edge
         </span>
         <span className="inline-flex items-center gap-1.5">
-          <span className="inline-block h-2.5 w-2.5 rounded-sm border border-teal-400 bg-teal-400/20" />
+          <span className="inline-block h-2.5 w-2.5 rounded-sm border border-verified bg-verified-tint" />
           copybook / record
         </span>
         <span className="inline-flex items-center gap-1.5">
-          <span className="inline-block h-2.5 w-2.5 rounded-sm border border-rose-500 bg-rose-500/20" />
+          <span className="inline-block h-2.5 w-2.5 rounded-sm border border-danger bg-danger-tint" />
           edit site
         </span>
       </div>
 
-      <div className="overflow-x-auto rounded-lg border border-slate-700/60 bg-ink-950/60 p-2">
+      <div className="overflow-x-auto rounded-lg border border-line bg-paper p-2">
         <svg
           width={totalWidth}
           height={totalHeight}
@@ -121,7 +130,7 @@ export default function GraphView({ graph, highlight = [], onNodeClick }) {
               markerHeight="6"
               orient="auto-start-reverse"
             >
-              <path d="M 0 0 L 10 5 L 0 10 z" fill="#64748b" />
+              <path d="M 0 0 L 10 5 L 0 10 z" fill={C.verified} />
             </marker>
             <marker
               id="arrow-inferred"
@@ -132,7 +141,7 @@ export default function GraphView({ graph, highlight = [], onNodeClick }) {
               markerHeight="6"
               orient="auto-start-reverse"
             >
-              <path d="M 0 0 L 10 5 L 0 10 z" fill="#f59e0b" />
+              <path d="M 0 0 L 10 5 L 0 10 z" fill={C.inferred} />
             </marker>
           </defs>
 
@@ -146,7 +155,7 @@ export default function GraphView({ graph, highlight = [], onNodeClick }) {
             const y1 = a.y + (b.cy > a.cy ? NODE_H : 0);
             const x2 = b.cx;
             const y2 = b.y + (b.cy > a.cy ? 0 : NODE_H);
-            const color = e.verified ? "#64748b" : "#f59e0b";
+            const color = e.verified ? C.verified : C.inferred;
             const focusEdge = !focused || hi.has(e.frm) || hi.has(e.to);
             return (
               <line
@@ -159,7 +168,7 @@ export default function GraphView({ graph, highlight = [], onNodeClick }) {
                 strokeWidth={focusEdge ? 1.7 : 1.1}
                 strokeDasharray={e.verified ? "0" : "5 4"}
                 markerEnd={`url(#arrow-${e.verified ? "verified" : "inferred"})`}
-                opacity={focusEdge ? 0.85 : 0.12}
+                opacity={focusEdge ? 0.85 : 0.18}
               >
                 <title>{`${e.frm} —${e.kind}→ ${e.to}${e.verified ? "" : " (inferred)"}`}</title>
               </line>

@@ -19,10 +19,11 @@ const cobolLang = StreamLanguage.define(cobol);
 
 // "Culprit" highlighting — mark source lines that reference the data fields this change is about
 // (the router's seed field names). Deterministic (parse the source), grounded in the analysis.
+// shft danger tint, tuned for the light editor theme.
 const culpritTheme = EditorView.baseTheme({
   ".cm-culprit-line": {
-    backgroundColor: "rgba(244, 63, 94, 0.10)",
-    boxShadow: "inset 3px 0 0 rgba(244, 63, 94, 0.7)",
+    backgroundColor: "rgba(217, 58, 86, 0.08)",
+    boxShadow: "inset 3px 0 0 rgba(217, 58, 86, 0.65)",
   },
 });
 
@@ -56,13 +57,13 @@ function culpritExtension(tokens) {
 }
 
 const DOT = {
-  pending: "bg-slate-500",
-  running: "bg-sky-400 animate-pulse",
-  done: "bg-emerald-400",
-  error: "bg-rose-400",
-  awaiting_approval: "bg-amber-400 animate-pulse",
-  approved: "bg-emerald-400",
-  rejected: "bg-rose-400",
+  pending: "bg-ink-mute",
+  running: "bg-brand-400 animate-pulse",
+  done: "bg-verified",
+  error: "bg-danger",
+  awaiting_approval: "bg-coral-400 animate-pulse",
+  approved: "bg-verified",
+  rejected: "bg-danger",
 };
 
 function programFromDiff(diff) {
@@ -126,11 +127,11 @@ function buildModified(sourceText, diff) {
 function Step({ n, title, statusValue, running, canRun, onRun, open, onToggle, children }) {
   const dot = running ? DOT.running : DOT[statusValue] || DOT.pending;
   return (
-    <div className="rounded-xl border border-slate-700/60 bg-ink-900/50">
+    <div className="rounded-xl border border-line bg-paper-light">
       <button type="button" onClick={onToggle} className="flex w-full items-center gap-2 px-3 py-2.5 text-left">
         <span className={`h-2 w-2 shrink-0 rounded-full ${dot}`} />
-        <span className="flex h-5 w-5 items-center justify-center rounded bg-slate-700/50 text-[11px] text-slate-300">{n}</span>
-        <span className="flex-1 text-sm font-semibold text-slate-100">{title}</span>
+        <span className="flex h-5 w-5 items-center justify-center rounded bg-paper-dark text-[11px] text-ink-soft">{n}</span>
+        <span className="flex-1 text-sm font-semibold text-ink">{title}</span>
         {canRun && (
           <span
             role="button"
@@ -139,14 +140,14 @@ function Step({ n, title, statusValue, running, canRun, onRun, open, onToggle, c
               e.stopPropagation();
               onRun();
             }}
-            className="rounded-md border border-slate-600/60 px-2 py-0.5 text-[11px] text-slate-300 transition hover:bg-slate-700/50"
+            className="rounded-md border border-line px-2 py-0.5 text-[11px] text-ink-soft transition hover:bg-paper-dark"
           >
             {running ? "…" : statusValue === "done" ? "Re-run" : "Run"}
           </span>
         )}
-        <span className={`text-[11px] text-slate-500 transition-transform ${open ? "rotate-90" : ""}`}>▸</span>
+        <span className={`text-[11px] text-ink-mute transition-transform ${open ? "rotate-90" : ""}`}>▸</span>
       </button>
-      {open && <div className="border-t border-slate-700/50 px-3 py-3">{children}</div>}
+      {open && <div className="border-t border-line px-3 py-3">{children}</div>}
     </div>
   );
 }
@@ -280,7 +281,7 @@ export default function CodeCockpit({ ctx, onOpenSource }) {
             <ul className="space-y-1.5">
               {locate.payload.programs.slice(0, 8).map((p, i) => (
                 <li key={i} className="flex items-center gap-2 text-[13px]">
-                  <button type="button" onClick={() => onOpenSource(p.program)} className="font-mono font-semibold text-slate-200 hover:text-indigo-300">
+                  <button type="button" onClick={() => onOpenSource(p.program)} className="font-mono font-semibold text-ink-soft hover:text-brand-500">
                     {p.program}
                   </button>
                   <VerifiedBadge verified={p.verified} />
@@ -288,7 +289,7 @@ export default function CodeCockpit({ ctx, onOpenSource }) {
               ))}
             </ul>
           ) : (
-            <p className="text-xs text-slate-500">Run to locate affected programs & copybooks.</p>
+            <p className="text-xs text-ink-mute">Run to locate affected programs & copybooks.</p>
           )}
         </Step>
 
@@ -296,7 +297,7 @@ export default function CodeCockpit({ ctx, onOpenSource }) {
           <select
             value={selectedProgram}
             onChange={(e) => setSelectedProgram(e.target.value)}
-            className="mb-2 w-full rounded-md border border-slate-600/60 bg-ink-950/70 px-2 py-1 text-xs text-slate-200 outline-none focus:border-indigo-500/70"
+            className="mb-2 w-full rounded-md border border-line bg-white px-2 py-1 text-xs text-ink outline-none focus:border-brand-400"
           >
             {programOptions.map((p) => (
               <option key={p} value={p}>
@@ -305,16 +306,16 @@ export default function CodeCockpit({ ctx, onOpenSource }) {
             ))}
           </select>
           {explain.payload && explain.payload.plain_english ? (
-            <p className="line-clamp-[8] text-[13px] leading-relaxed text-slate-400">{explain.payload.plain_english}</p>
+            <p className="line-clamp-[8] text-[13px] leading-relaxed text-ink-soft">{explain.payload.plain_english}</p>
           ) : (
-            <p className="text-xs text-slate-500">Pick a program and run for a plain-English walkthrough.</p>
+            <p className="text-xs text-ink-mute">Pick a program and run for a plain-English walkthrough.</p>
           )}
         </Step>
 
         <Step n={3} title="Impact" statusValue={status("impact")} running={running.impact} canRun onRun={() => handleRun("impact")} open={open === "impact"} onToggle={() => toggle("impact")}>
           {impact.payload && impact.payload.affected ? (
             <>
-              <p className="mb-2 text-xs text-slate-500">
+              <p className="mb-2 text-xs text-ink-mute">
                 Blast radius: {(state && state.graph && state.graph.nodes && state.graph.nodes.length) || 0} nodes ·{" "}
                 {(state && state.graph && state.graph.edges && state.graph.edges.length) || 0} edges
               </p>
@@ -325,7 +326,7 @@ export default function CodeCockpit({ ctx, onOpenSource }) {
                     highlight={node.edit_sites || []}
                     onNodeClick={(n) => onOpenSource(n)}
                   />
-                  <p className="mt-1 text-[10px] text-slate-600">
+                  <p className="mt-1 text-[10px] text-ink-mute">
                     scroll → · click a node to read its source · full size in the Notebook view
                   </p>
                 </div>
@@ -333,29 +334,29 @@ export default function CodeCockpit({ ctx, onOpenSource }) {
               <AffectedList affected={impact.payload.affected} />
             </>
           ) : (
-            <p className="text-xs text-slate-500">Run to map the blast radius.</p>
+            <p className="text-xs text-ink-mute">Run to map the blast radius.</p>
           )}
         </Step>
 
         <Step n={4} title="Propose" statusValue={status("propose")} running={running.propose} canRun onRun={() => handleRun("propose")} open={open === "propose"} onToggle={() => toggle("propose")}>
           {proposeCell.status === "approved" ? (
-            <p className="text-[13px] text-emerald-300">✓ Accepted and recorded.</p>
+            <p className="text-[13px] text-verified">✓ Accepted and recorded.</p>
           ) : proposeCell.status === "rejected" ? (
-            <p className="text-[13px] text-rose-300">✕ Denied — nothing was applied. Re-run to draft a different change.</p>
+            <p className="text-[13px] text-danger">✕ Denied — nothing was applied. Re-run to draft a different change.</p>
           ) : gateOpen ? (
             <>
               {proposeCell.payload && proposeCell.payload.explanation && (
-                <p className="mb-2 line-clamp-4 text-[13px] leading-relaxed text-slate-400">
+                <p className="mb-2 line-clamp-4 text-[13px] leading-relaxed text-ink-soft">
                   {proposeCell.payload.explanation}
                 </p>
               )}
-              <p className="text-[13px] text-amber-300">
+              <p className="text-[13px] text-magenta-700">
                 ✦ Suggestion drafted — <b>review it inline in the editor →</b> accept the hunk, edit the
                 code, or deny. Recording requires a typed justification.
               </p>
             </>
           ) : (
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-ink-mute">
               Drafts the minimal change for this file — you review it in the editor pane before anything
               is recorded.
             </p>
@@ -365,20 +366,20 @@ export default function CodeCockpit({ ctx, onOpenSource }) {
         <Step n={5} title="Record" statusValue={status("record")} running={false} canRun={false} open={open === "record"} onToggle={() => toggle("record")}>
           {recordEntry ? (
             <div className="space-y-1.5 text-[13px]">
-              <div className="flex items-center gap-2 font-semibold text-emerald-200">
+              <div className="flex items-center gap-2 font-semibold text-verified">
                 <span>⛓</span> Recorded — tamper-evident
               </div>
-              <div className="text-slate-400">
-                Decision: <span className="font-mono text-slate-300">{recordEntry.decision}</span> · Approver:{" "}
-                <span className="font-mono text-slate-300">{recordEntry.approver}</span>
+              <div className="text-ink-soft">
+                Decision: <span className="font-mono text-ink">{recordEntry.decision}</span> · Approver:{" "}
+                <span className="font-mono text-ink">{recordEntry.approver}</span>
               </div>
-              <div className="truncate font-mono text-[11px] text-slate-500" title={recordEntry.entry_hash}>
+              <div className="truncate font-mono text-[11px] text-ink-mute" title={recordEntry.entry_hash}>
                 entry {String(recordEntry.entry_hash).slice(0, 18)}…
               </div>
-              {recordEntry.rationale && <p className="italic text-slate-400">“{recordEntry.rationale}”</p>}
+              {recordEntry.rationale && <p className="italic text-ink-soft">“{recordEntry.rationale}”</p>}
             </div>
           ) : (
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-ink-mute">
               Writes the approved change to the tamper-evident ledger. Writes only on approval.
             </p>
           )}
@@ -387,13 +388,13 @@ export default function CodeCockpit({ ctx, onOpenSource }) {
       </aside>
 
       {/* RIGHT — code editor */}
-      <main className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border border-slate-700/60 bg-ink-950/60">
-        <header className="flex items-center gap-2 border-b border-slate-700/50 bg-ink-900/70 px-4 py-2.5">
+      <main className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border border-line bg-white shadow-card">
+        <header className="flex items-center gap-2 border-b border-line bg-paper px-4 py-2.5">
           <span>📄</span>
-          <span className="font-mono text-sm font-semibold text-slate-100">{fileLabel}</span>
-          {src && <span className="font-mono text-[11px] text-slate-500">{src.n_lines} lines</span>}
+          <span className="font-mono text-sm font-semibold text-ink">{fileLabel}</span>
+          {src && <span className="font-mono text-[11px] text-ink-mute">{src.n_lines} lines</span>}
           {built && !approvedDone && (
-            <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[11px] font-medium text-amber-300">
+            <span className="rounded-full border border-inferred/30 bg-inferred-tint px-2 py-0.5 text-[11px] font-medium text-[#8a6410]">
               ✦ AI suggestion — review inline
             </span>
           )}
@@ -403,7 +404,7 @@ export default function CodeCockpit({ ctx, onOpenSource }) {
                 type="button"
                 onClick={() => setShowCulprits((v) => !v)}
                 title={`Highlight lines referencing: ${culpritTokens.join(", ")}`}
-                className={`rounded-md border px-2 py-1 text-[11px] transition ${showCulprits ? "border-rose-500/50 bg-rose-500/10 text-rose-200" : "border-slate-600/60 text-slate-400 hover:bg-slate-700/50"}`}
+                className={`rounded-md border px-2 py-1 text-[11px] transition ${showCulprits ? "border-danger/50 bg-danger-tint text-[#b02138]" : "border-line text-ink-soft hover:bg-paper-dark"}`}
               >
                 ⚠ Culprits
               </button>
@@ -411,7 +412,7 @@ export default function CodeCockpit({ ctx, onOpenSource }) {
             <button
               type="button"
               onClick={() => onOpenSource(fileProgram)}
-              className="rounded-md border border-slate-600/60 px-2 py-1 text-[11px] text-slate-300 transition hover:bg-slate-700/50"
+              className="rounded-md border border-line px-2 py-1 text-[11px] text-ink-soft transition hover:bg-paper-dark"
             >
               View full file
             </button>
@@ -420,15 +421,15 @@ export default function CodeCockpit({ ctx, onOpenSource }) {
 
         <div className="h-[440px] overflow-hidden">
           {srcErr ? (
-            <div className="p-4 text-sm text-rose-300">Could not load source for {fileProgram}.</div>
+            <div className="p-4 text-sm text-danger">Could not load source for {fileProgram}.</div>
           ) : !src ? (
-            <div className="p-4 text-sm text-slate-500">Loading {fileProgram}…</div>
+            <div className="p-4 text-sm text-ink-mute">Loading {fileProgram}…</div>
           ) : built && !approvedDone ? (
             // Inline merge: AI change applied into the file; accept/reject in the gutter or edit freely.
             <CodeMirror
               key={`merge:${fileProgram}:${(proposeCell.proposed_diff || "").length}`}
               value={built.modified}
-              theme="dark"
+              theme="light"
               height="440px"
               extensions={mergeExtensions}
               onChange={(val) => setEditorDoc(val)}
@@ -438,7 +439,7 @@ export default function CodeCockpit({ ctx, onOpenSource }) {
             <CodeMirror
               key={`src:${fileProgram}:${proposeCell.status}`}
               value={approvedDone && built ? built.modified : src.text || ""}
-              theme="dark"
+              theme="light"
               height="440px"
               extensions={baseExt}
               editable={false}
@@ -448,10 +449,10 @@ export default function CodeCockpit({ ctx, onOpenSource }) {
         </div>
 
         {showCulprits && culpritTokens.length > 0 && (
-          <div className="flex flex-wrap items-center gap-1 border-t border-slate-700/50 bg-rose-500/[0.04] px-4 py-1.5 text-[11px] text-rose-300/80">
+          <div className="flex flex-wrap items-center gap-1 border-t border-line bg-danger-tint/40 px-4 py-1.5 text-[11px] text-[#b02138]">
             <span>⚠ Culprit lines reference</span>
             {culpritTokens.map((t) => (
-              <code key={t} className="rounded bg-rose-500/15 px-1 font-mono text-rose-200">
+              <code key={t} className="rounded bg-danger-tint px-1 font-mono text-[#b02138]">
                 {t}
               </code>
             ))}
@@ -460,14 +461,14 @@ export default function CodeCockpit({ ctx, onOpenSource }) {
         )}
 
         {/* AI suggestion action / attested gate */}
-        <footer className="border-t border-slate-700/50 bg-ink-900/70 px-4 py-3">
+        <footer className="border-t border-line bg-paper px-4 py-3">
           {!hasSuggestion ? (
             <div className="flex items-center gap-3">
               <button
                 type="button"
                 disabled={running.propose}
                 onClick={() => handleRun("propose")}
-                className="inline-flex items-center gap-2 rounded-lg bg-indigo-500 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-indigo-900/30 transition hover:bg-indigo-400 disabled:opacity-40"
+                className="inline-flex items-center gap-2 rounded-lg bg-brand-500 px-4 py-2 text-sm font-semibold text-white shadow-card transition hover:bg-brand-700 disabled:opacity-40"
               >
                 {running.propose ? (
                   <>
@@ -477,38 +478,38 @@ export default function CodeCockpit({ ctx, onOpenSource }) {
                   <>✦ Generate AI suggestion</>
                 )}
               </button>
-              <span className="text-xs text-slate-500">Drafts the minimal change for this file — you review it before anything is recorded.</span>
+              <span className="text-xs text-ink-mute">Drafts the minimal change for this file — you review it before anything is recorded.</span>
             </div>
           ) : approvedDone ? (
-            <div className="rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-200">
+            <div className="rounded-lg border border-verified/40 bg-verified-tint px-3 py-2 text-sm text-verified">
               ✓ Accepted and recorded to the tamper-evident ledger.
             </div>
           ) : (
             <div className="space-y-3">
               {proposeCell.payload && proposeCell.payload.explanation && (
-                <p className="text-[13px] leading-relaxed text-slate-400">{proposeCell.payload.explanation}</p>
+                <p className="text-[13px] leading-relaxed text-ink-soft">{proposeCell.payload.explanation}</p>
               )}
               {built && built.region && (
-                <p className="text-[11px] text-amber-300/80">
+                <p className="text-[11px] text-[#8a6410]">
                   Showing the changed region (couldn't anchor it in the file) — accept/edit works the same.
                 </p>
               )}
-              <div className="rounded-xl border border-amber-500/40 bg-amber-500/[0.06] p-3">
-                <label className="mb-1 block text-[11px] font-medium uppercase tracking-wider text-amber-200/80">
-                  Justification <span className="text-rose-300">*</span> — hash-chained into the ledger
+              <div className="rounded-xl border border-coral-400/40 bg-coral-tint p-3">
+                <label className="mb-1 block text-[11px] font-medium uppercase tracking-wider text-magenta-700">
+                  Justification <span className="text-danger">*</span> — hash-chained into the ledger
                 </label>
                 <textarea
                   value={rationale}
                   onChange={(e) => setRationale(e.target.value)}
                   placeholder="Why is this change correct and safe to apply?"
-                  className="mb-2 h-16 w-full resize-y rounded-lg border border-amber-500/30 bg-ink-950/70 p-2 text-[13px] leading-relaxed text-slate-200 outline-none placeholder:text-slate-600 focus:border-amber-400/70"
+                  className="mb-2 h-16 w-full resize-y rounded-lg border border-coral-400/30 bg-white p-2 text-[13px] leading-relaxed text-ink outline-none placeholder:text-ink-mute focus:border-coral-400"
                 />
                 <div className="flex flex-wrap items-center gap-2">
                   <button
                     type="button"
                     disabled={gateBusy || !rationale.trim()}
                     onClick={acceptRecord}
-                    className="rounded-lg bg-emerald-600 px-4 py-1.5 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-40"
+                    className="rounded-lg bg-verified px-4 py-1.5 text-sm font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     ✓ Accept &amp; record
                   </button>
@@ -516,13 +517,13 @@ export default function CodeCockpit({ ctx, onOpenSource }) {
                     type="button"
                     disabled={gateBusy}
                     onClick={() => handleDecision("reject")}
-                    className="rounded-lg border border-rose-500/50 bg-rose-500/10 px-4 py-1.5 text-sm font-semibold text-rose-200 transition hover:bg-rose-500/20 disabled:opacity-40"
+                    className="rounded-lg border border-danger/50 bg-danger-tint px-4 py-1.5 text-sm font-semibold text-[#b02138] transition hover:brightness-95 disabled:opacity-40"
                   >
                     ✕ Deny
                   </button>
-                  <span className="text-[11px] text-slate-500">Edit the code above, or accept the AI hunk in the gutter, then record.</span>
+                  <span className="text-[11px] text-ink-mute">Edit the code above, or accept the AI hunk in the gutter, then record.</span>
                 </div>
-                {note && <p className="mt-2 text-[12px] text-amber-300">{note}</p>}
+                {note && <p className="mt-2 text-[12px] text-[#8a6410]">{note}</p>}
               </div>
             </div>
           )}

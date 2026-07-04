@@ -25,13 +25,13 @@ function RichText({ text }) {
       if (m.index > last) out.push(line.slice(last, m.index));
       if (m[1])
         out.push(
-          <strong key={`${keyBase}-b${i}`} className="font-semibold text-slate-100">
+          <strong key={`${keyBase}-b${i}`} className="font-semibold text-ink">
             {m[1]}
           </strong>
         );
       else
         out.push(
-          <em key={`${keyBase}-i${i}`} className="text-slate-200 not-italic underline decoration-slate-600 underline-offset-2">
+          <em key={`${keyBase}-i${i}`} className="text-ink not-italic underline decoration-line underline-offset-2">
             {m[2]}
           </em>
         );
@@ -229,36 +229,36 @@ export default function StageCockpit({ node, onBack, onStatusChange, onRecorded 
           <button
             type="button"
             onClick={onBack}
-            className="inline-flex items-center gap-2 rounded-lg border border-slate-600/60 bg-ink-900/60 px-3 py-1.5 text-sm font-medium text-slate-200 transition hover:bg-slate-700/50"
+            className="inline-flex items-center gap-2 rounded-lg border border-line bg-paper-light px-3 py-1.5 text-sm font-medium text-ink-soft transition hover:bg-paper-dark"
           >
             ← Back to programme
           </button>
           <div className="flex items-center gap-2">
-            <div className="flex items-center rounded-lg border border-slate-600/60 bg-ink-950/60 p-0.5 text-xs font-medium">
+            <div className="flex items-center rounded-lg border border-line bg-paper p-0.5 text-xs font-medium">
               <button
                 type="button"
                 onClick={() => setView("code")}
-                className={`rounded-md px-2.5 py-1 transition ${view === "code" ? "bg-slate-700 text-slate-100" : "text-slate-400 hover:text-slate-200"}`}
+                className={`rounded-md px-2.5 py-1 transition ${view === "code" ? "bg-paper-dark text-ink" : "text-ink-soft hover:text-ink"}`}
               >
                 ⌨ Code editor
               </button>
               <button
                 type="button"
                 onClick={() => setView("notebook")}
-                className={`rounded-md px-2.5 py-1 transition ${view === "notebook" ? "bg-slate-700 text-slate-100" : "text-slate-400 hover:text-slate-200"}`}
+                className={`rounded-md px-2.5 py-1 transition ${view === "notebook" ? "bg-paper-dark text-ink" : "text-ink-soft hover:text-ink"}`}
               >
                 Notebook
               </button>
             </div>
             <span
-              className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-medium text-emerald-300"
+              className="inline-flex items-center gap-1.5 rounded-full border border-verified/30 bg-verified-tint px-2.5 py-1 text-[11px] font-medium text-verified"
               title="Parsing, the dependency graph, and the ledger run locally. Explain/Propose send code snippets to the Claude API (in-VPC / zero-retention deployment is a config choice, not a code change)."
             >
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+              <span className="h-1.5 w-1.5 rounded-full bg-verified" />
               Proposal-only — nothing is ever applied automatically
             </span>
             {USE_MOCK && (
-              <span className="rounded-full border border-slate-600/50 bg-slate-700/30 px-2.5 py-1 text-[11px] font-medium text-slate-400">
+              <span className="rounded-full border border-line bg-paper-dark px-2.5 py-1 text-[11px] font-medium text-ink-mute">
                 mock data
               </span>
             )}
@@ -266,23 +266,23 @@ export default function StageCockpit({ node, onBack, onStatusChange, onRecorded 
         </div>
 
         {/* Scoped sub-change context */}
-        <div className="rounded-2xl border border-slate-700/60 bg-ink-900/60 p-4 shadow-xl shadow-black/20 backdrop-blur-sm">
-          <div className="mb-1 flex items-center gap-2 text-[11px] font-medium uppercase tracking-wider text-indigo-300/80">
+        <div className="rounded-2xl border border-line bg-paper-light p-4 shadow-card">
+          <div className="mb-1 flex items-center gap-2 text-[11px] font-medium uppercase tracking-wider text-brand-700">
             <span>◆ Sub-change</span>
             {node.edit_sites && node.edit_sites.length > 0 && (
-              <span className="font-mono text-slate-500">{node.edit_sites.join(" · ")}</span>
+              <span className="font-mono text-ink-mute">{node.edit_sites.join(" · ")}</span>
             )}
           </div>
-          <h1 className="text-lg font-bold tracking-tight text-slate-100">{node.label}</h1>
-          <p className="mt-1 text-sm text-slate-400">{node.change_request}</p>
-          <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500">
+          <h1 className="text-lg font-bold tracking-tight text-ink">{node.label}</h1>
+          <p className="mt-1 text-sm text-ink-soft">{node.change_request}</p>
+          <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-ink-mute">
             <span>
-              Session: <span className="font-mono text-slate-400">{sessionId || "—"}</span>
+              Session: <span className="font-mono text-ink-soft">{sessionId || "—"}</span>
             </span>
             {state && state.intent && (
               <span>
                 Intent:{" "}
-                <span className="rounded bg-indigo-500/10 px-1.5 py-0.5 font-mono text-indigo-300">
+                <span className="rounded bg-brand-50 px-1.5 py-0.5 font-mono text-brand-700">
                   {state.intent}
                 </span>
               </span>
@@ -293,7 +293,7 @@ export default function StageCockpit({ node, onBack, onStatusChange, onRecorded 
                 {state.seed_symbols.map((s) => (
                   <span
                     key={s}
-                    className="rounded bg-slate-700/40 px-1.5 py-0.5 font-mono text-[11px] text-slate-300"
+                    className="rounded bg-paper-dark px-1.5 py-0.5 font-mono text-[11px] text-ink-soft"
                   >
                     {s}
                   </span>
@@ -303,13 +303,13 @@ export default function StageCockpit({ node, onBack, onStatusChange, onRecorded 
             <button
               type="button"
               onClick={() => handleNewSession(node.change_request)}
-              className="ml-auto rounded-md border border-slate-600/50 px-2 py-0.5 text-slate-400 transition hover:bg-slate-700/40 hover:text-slate-200"
+              className="ml-auto rounded-md border border-line px-2 py-0.5 text-ink-soft transition hover:bg-paper-dark hover:text-ink"
             >
               ↻ Re-run stage
             </button>
           </div>
           {errors.session && (
-            <div className="mt-2 rounded-lg border border-rose-500/40 bg-rose-500/10 px-3 py-2 text-sm text-rose-200">
+            <div className="mt-2 rounded-lg border border-danger/40 bg-danger-tint px-3 py-2 text-sm text-[#b02138]">
               Could not start session: {errors.session.error}
             </div>
           )}
@@ -331,10 +331,10 @@ export default function StageCockpit({ node, onBack, onStatusChange, onRecorded 
             ].map(([label, value]) => (
               <div
                 key={label}
-                className="rounded-xl border border-slate-700/50 bg-ink-900/50 px-3 py-2 text-center"
+                className="rounded-xl border border-line bg-paper-light px-3 py-2 text-center"
               >
-                <div className="text-lg font-bold text-slate-100">{value != null ? value : "—"}</div>
-                <div className="text-[10px] uppercase tracking-wider text-slate-500">{label}</div>
+                <div className="text-lg font-bold text-ink">{value != null ? value : "—"}</div>
+                <div className="text-[10px] uppercase tracking-wider text-ink-mute">{label}</div>
               </div>
             ))}
           </div>
@@ -364,14 +364,14 @@ export default function StageCockpit({ node, onBack, onStatusChange, onRecorded 
                 const progs = cell("locate").payload.programs || [];
                 const g = progs.filter((p) => p.grounded).length;
                 return g > 0 ? (
-                  <div className="flex items-start gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/[0.07] px-3 py-2 text-[13px] text-emerald-200">
+                  <div className="flex items-start gap-2 rounded-lg border border-verified/30 bg-verified-tint px-3 py-2 text-[13px] text-verified">
                     <span className="text-base leading-none">✓</span>
                     <span>
                       <span className="font-semibold">
                         {g} of {progs.length}
                       </span>{" "}
                       grounded in the field index —
-                      <span className="text-emerald-300/90">
+                      <span className="text-verified">
                         {" "}
                         deterministically parsed from the COBOL, not inferred by the model.
                       </span>
@@ -383,30 +383,30 @@ export default function StageCockpit({ node, onBack, onStatusChange, onRecorded 
                 {cell("locate").payload.programs.map((p, i) => (
                   <li
                     key={i}
-                    className="animate-fade-in rounded-lg border border-slate-700/50 bg-ink-950/40 p-3"
+                    className="animate-fade-in rounded-lg border border-line bg-paper p-3"
                   >
                     <div className="mb-1 flex items-center gap-2">
-                      <span className="font-mono text-sm font-semibold text-slate-100">
+                      <span className="font-mono text-sm font-semibold text-ink">
                         {p.program}
                       </span>
                       <VerifiedBadge verified={p.verified} />
-                      <span className="ml-auto font-mono text-[11px] text-slate-500">{p.file}</span>
+                      <span className="ml-auto font-mono text-[11px] text-ink-mute">{p.file}</span>
                     </div>
-                    <p className="text-sm text-slate-400">{p.reason}</p>
+                    <p className="text-sm text-ink-soft">{p.reason}</p>
                   </li>
                 ))}
               </ul>
 
               {cell("locate").citations && cell("locate").citations.length > 0 && (
                 <div>
-                  <h4 className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  <h4 className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-ink-mute">
                     Source citations
                   </h4>
                   <div className="flex flex-wrap gap-2">
                     {cell("locate").citations.map((c, i) => (
                       <span
                         key={i}
-                        className="inline-flex items-center gap-1.5 rounded-md border border-slate-700/50 bg-ink-950/40 px-2 py-1 font-mono text-[11px] text-slate-400"
+                        className="inline-flex items-center gap-1.5 rounded-md border border-line bg-paper px-2 py-1 font-mono text-[11px] text-ink-soft"
                       >
                         {c.program}
                         {c.lines ? `:${c.lines}` : ""}
@@ -436,7 +436,7 @@ export default function StageCockpit({ node, onBack, onStatusChange, onRecorded 
             <select
               value={selectedProgram}
               onChange={(e) => setSelectedProgram(e.target.value)}
-              className="rounded-lg border border-slate-600/60 bg-ink-950/70 px-2.5 py-1.5 text-sm text-slate-200 outline-none focus:border-indigo-500/70"
+              className="rounded-lg border border-line bg-white px-2.5 py-1.5 text-sm text-ink outline-none focus:border-brand-400"
               title="Program to explain"
             >
               {programOptions.map((p) => (
@@ -449,28 +449,28 @@ export default function StageCockpit({ node, onBack, onStatusChange, onRecorded 
         >
           {cell("explain").payload && cell("explain").payload.plain_english ? (
             <div className="space-y-4">
-              <div className="rounded-lg border border-slate-700/40 bg-ink-950/30 p-4 text-sm leading-relaxed text-slate-300">
+              <div className="rounded-lg border border-line bg-paper p-4 text-sm leading-relaxed text-ink-soft">
                 <RichText text={cell("explain").payload.plain_english} />
               </div>
 
               {cell("explain").payload.cobol_idioms &&
                 cell("explain").payload.cobol_idioms.length > 0 && (
                   <div>
-                    <h4 className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
-                      <span className="text-indigo-400">◆</span> COBOL idioms in play
+                    <h4 className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-ink-mute">
+                      <span className="text-brand-500">◆</span> COBOL idioms in play
                     </h4>
                     <div className="space-y-2.5">
                       {cell("explain").payload.cobol_idioms.map((idi, i) => (
                         <div
                           key={i}
-                          className="animate-fade-in grid gap-2 rounded-lg border border-indigo-500/20 bg-indigo-500/[0.04] p-3 md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]"
+                          className="animate-fade-in grid gap-2 rounded-lg border border-brand-400/20 bg-brand-50 p-3 md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]"
                         >
-                          <div className="overflow-x-auto rounded-md border border-slate-700/60 bg-ink-950/80 p-2.5">
-                            <code className="whitespace-pre font-mono text-[12.5px] text-emerald-300">
+                          <div className="overflow-x-auto rounded-md border border-line bg-white p-2.5">
+                            <code className="whitespace-pre font-mono text-[12.5px] text-ink">
                               {idi.snippet}
                             </code>
                           </div>
-                          <p className="text-sm text-slate-400">{idi.explanation}</p>
+                          <p className="text-sm text-ink-soft">{idi.explanation}</p>
                         </div>
                       ))}
                     </div>
@@ -498,7 +498,7 @@ export default function StageCockpit({ node, onBack, onStatusChange, onRecorded 
               <AffectedList affected={cell("impact").payload.affected} />
 
               <div>
-                <h4 className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                <h4 className="mb-2 text-xs font-semibold uppercase tracking-wider text-ink-mute">
                   Blast-radius dependency graph
                 </h4>
                 <GraphView
@@ -506,7 +506,7 @@ export default function StageCockpit({ node, onBack, onStatusChange, onRecorded 
                   highlight={node.edit_sites || ["XFRFUN", "DBCRFUN"]}
                   onNodeClick={(name) => setSourceOpen(name)}
                 />
-                <p className="mt-2 text-[11px] text-slate-500">Click any node to read its source.</p>
+                <p className="mt-2 text-[11px] text-ink-mute">Click any node to read its source.</p>
               </div>
             </div>
           ) : (
@@ -533,41 +533,41 @@ export default function StageCockpit({ node, onBack, onStatusChange, onRecorded 
           {proposeCell.proposed_diff || proposeCell.status === "approved" ? (
             <div className="space-y-4">
               {proposeCell.payload && proposeCell.payload.explanation && (
-                <div className="rounded-lg border border-slate-700/40 bg-ink-950/30 p-3.5 text-sm leading-relaxed text-slate-300">
+                <div className="rounded-lg border border-line bg-paper p-3.5 text-sm leading-relaxed text-ink-soft">
                   <RichText text={proposeCell.payload.explanation} />
                 </div>
               )}
 
               {editing ? (
                 <div>
-                  <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-slate-400">
+                  <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-ink-soft">
                     Edit the diff before approving
                   </label>
                   <textarea
                     value={editedDiff}
                     onChange={(e) => setEditedDiff(e.target.value)}
                     spellCheck={false}
-                    className="h-64 w-full resize-y rounded-lg border border-slate-600/60 bg-ink-950/80 p-3 font-mono text-[12.5px] text-slate-200 outline-none focus:border-indigo-500/70"
+                    className="h-64 w-full resize-y rounded-lg border border-line bg-white p-3 font-mono text-[12.5px] text-ink outline-none focus:border-brand-400"
                   />
                 </div>
               ) : (
                 <DiffView diff={proposeCell.proposed_diff} />
               )}
 
-              {/* THE CONTROL SURFACE — hard human gate */}
+              {/* THE CONTROL SURFACE — hard human gate (Signal Coral) */}
               {gateOpen && (
-                <div className="animate-fade-in rounded-xl border border-amber-500/40 bg-amber-500/[0.06] p-4">
-                  <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-amber-200">
+                <div className="animate-fade-in rounded-xl border border-coral-400/40 bg-coral-tint p-4">
+                  <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-magenta-700">
                     <span className="text-lg">✋</span> Human approval required
-                    <span className="ml-1 font-normal text-amber-200/70">
+                    <span className="ml-1 font-normal text-magenta-700/70">
                       — the agent will not apply or record this change on its own.
                     </span>
                   </div>
 
                   <div className="mb-3">
-                    <label className="mb-1.5 flex flex-wrap items-center gap-1.5 text-[11px] font-medium uppercase tracking-wider text-amber-200/80">
-                      Justification <span className="text-rose-300">*</span>
-                      <span className="font-normal normal-case tracking-normal text-amber-200/50">
+                    <label className="mb-1.5 flex flex-wrap items-center gap-1.5 text-[11px] font-medium uppercase tracking-wider text-magenta-700/80">
+                      Justification <span className="text-danger">*</span>
+                      <span className="font-normal normal-case tracking-normal text-magenta-700/50">
                         — recorded verbatim in the ledger and hash-chained with the diff
                       </span>
                     </label>
@@ -575,7 +575,7 @@ export default function StageCockpit({ node, onBack, onStatusChange, onRecorded 
                       value={rationale}
                       onChange={(e) => setRationale(e.target.value)}
                       placeholder="Why is this change correct and safe to apply? e.g. mirrors the existing MORTGAGE/LOAN guard; localized to the debit side; no copybook or interface change."
-                      className="h-20 w-full resize-y rounded-lg border border-amber-500/30 bg-ink-950/70 p-2.5 text-[13px] leading-relaxed text-slate-200 outline-none placeholder:text-slate-600 focus:border-amber-400/70"
+                      className="h-20 w-full resize-y rounded-lg border border-coral-400/30 bg-white p-2.5 text-[13px] leading-relaxed text-ink outline-none placeholder:text-ink-mute focus:border-coral-400"
                     />
                   </div>
 
@@ -587,7 +587,7 @@ export default function StageCockpit({ node, onBack, onStatusChange, onRecorded 
                           disabled={gateBusy || !rationale.trim()}
                           title={!rationale.trim() ? "Enter a justification to approve" : undefined}
                           onClick={() => handleDecision("approve")}
-                          className="rounded-lg bg-emerald-600 px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-emerald-900/40 transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-40"
+                          className="rounded-lg bg-verified px-5 py-2 text-sm font-semibold text-white shadow-card transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
                         >
                           ✓ Approve
                         </button>
@@ -598,7 +598,7 @@ export default function StageCockpit({ node, onBack, onStatusChange, onRecorded 
                             setEditedDiff(proposeCell.proposed_diff || "");
                             setEditing(true);
                           }}
-                          className="rounded-lg border border-slate-500/60 bg-slate-700/40 px-5 py-2 text-sm font-semibold text-slate-100 transition hover:bg-slate-600/50 disabled:opacity-40"
+                          className="rounded-lg border border-line bg-paper-light px-5 py-2 text-sm font-semibold text-ink transition hover:bg-paper-dark disabled:opacity-40"
                         >
                           ✎ Edit
                         </button>
@@ -606,7 +606,7 @@ export default function StageCockpit({ node, onBack, onStatusChange, onRecorded 
                           type="button"
                           disabled={gateBusy}
                           onClick={() => handleDecision("reject")}
-                          className="rounded-lg border border-rose-500/50 bg-rose-500/10 px-5 py-2 text-sm font-semibold text-rose-200 transition hover:bg-rose-500/20 disabled:opacity-40"
+                          className="rounded-lg border border-danger/50 bg-danger-tint px-5 py-2 text-sm font-semibold text-[#b02138] transition hover:brightness-95 disabled:opacity-40"
                         >
                           ✕ Reject
                         </button>
@@ -618,7 +618,7 @@ export default function StageCockpit({ node, onBack, onStatusChange, onRecorded 
                           disabled={gateBusy || !rationale.trim()}
                           title={!rationale.trim() ? "Enter a justification to approve" : undefined}
                           onClick={() => handleDecision("edit")}
-                          className="rounded-lg bg-emerald-600 px-5 py-2 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-40"
+                          className="rounded-lg bg-verified px-5 py-2 text-sm font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
                         >
                           ✓ Approve edited diff
                         </button>
@@ -626,15 +626,15 @@ export default function StageCockpit({ node, onBack, onStatusChange, onRecorded 
                           type="button"
                           disabled={gateBusy}
                           onClick={() => setEditing(false)}
-                          className="rounded-lg border border-slate-500/60 bg-slate-700/40 px-5 py-2 text-sm font-semibold text-slate-100 transition hover:bg-slate-600/50 disabled:opacity-40"
+                          className="rounded-lg border border-line bg-paper-light px-5 py-2 text-sm font-semibold text-ink transition hover:bg-paper-dark disabled:opacity-40"
                         >
                           Cancel
                         </button>
                       </>
                     )}
                     {gateBusy && (
-                      <span className="flex items-center gap-2 text-sm text-slate-400">
-                        <span className="h-4 w-4 animate-spin rounded-full border-2 border-slate-500/50 border-t-slate-200" />
+                      <span className="flex items-center gap-2 text-sm text-ink-soft">
+                        <span className="h-4 w-4 animate-spin rounded-full border-2 border-line border-t-brand-500" />
                         Recording decision…
                       </span>
                     )}
@@ -643,12 +643,12 @@ export default function StageCockpit({ node, onBack, onStatusChange, onRecorded 
               )}
 
               {proposeCell.status === "approved" && (
-                <div className="rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
+                <div className="rounded-lg border border-verified/40 bg-verified-tint px-4 py-3 text-sm text-verified">
                   ✓ Proposal approved and recorded. See the Record cell and ledger below.
                 </div>
               )}
               {proposeCell.status === "rejected" && (
-                <div className="rounded-lg border border-rose-500/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
+                <div className="rounded-lg border border-danger/40 bg-danger-tint px-4 py-3 text-sm text-[#b02138]">
                   ✕ Proposal rejected — nothing was applied. Re-run Propose to draft a different change.
                 </div>
               )}
@@ -669,8 +669,8 @@ export default function StageCockpit({ node, onBack, onStatusChange, onRecorded 
         >
           {recordEntry ? (
             <div className="animate-fade-in space-y-3">
-              <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/[0.06] p-4">
-                <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-emerald-200">
+              <div className="rounded-lg border border-verified/30 bg-verified-tint p-4">
+                <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-verified">
                   <span>⛓</span> Ledger entry #{recordEntry.index} appended
                 </div>
                 <dl className="grid grid-cols-1 gap-x-6 gap-y-1.5 text-sm sm:grid-cols-2">
@@ -682,11 +682,11 @@ export default function StageCockpit({ node, onBack, onStatusChange, onRecorded 
                   <Field label="Entry hash" value={recordEntry.entry_hash} mono truncate />
                 </dl>
                 {recordEntry.rationale && (
-                  <div className="mt-3 border-t border-emerald-500/20 pt-3">
-                    <div className="mb-1 text-[11px] font-medium uppercase tracking-wider text-emerald-200/70">
+                  <div className="mt-3 border-t border-verified/20 pt-3">
+                    <div className="mb-1 text-[11px] font-medium uppercase tracking-wider text-verified">
                       Justification (hash-chained)
                     </div>
-                    <p className="text-[13px] italic leading-relaxed text-slate-300">
+                    <p className="text-[13px] italic leading-relaxed text-ink-soft">
                       “{recordEntry.rationale}”
                     </p>
                   </div>
@@ -702,8 +702,8 @@ export default function StageCockpit({ node, onBack, onStatusChange, onRecorded 
         <LedgerPanel sessionId={sessionId} entries={ledger.entries} onRefresh={(led) => setLedger(led)} />
       </div>
 
-      <footer className="mt-10 text-center text-xs text-slate-600">
-        Legacy Move · read-only cells run freely · the state-changing step is gated behind explicit
+      <footer className="mt-10 text-center text-xs text-ink-mute">
+        shft · read-only cells run freely · the state-changing step is gated behind explicit
         human approval · every approved change is provable.
       </footer>
       </>
@@ -716,7 +716,7 @@ export default function StageCockpit({ node, onBack, onStatusChange, onRecorded 
 
 function Placeholder({ text }) {
   return (
-    <div className="rounded-lg border border-dashed border-slate-700/60 bg-ink-950/30 px-4 py-8 text-center text-sm text-slate-500">
+    <div className="rounded-lg border border-dashed border-line bg-paper px-4 py-8 text-center text-sm text-ink-mute">
       {text}
     </div>
   );
@@ -725,9 +725,9 @@ function Placeholder({ text }) {
 function Field({ label, value, mono, truncate }) {
   return (
     <div className={truncate ? "min-w-0" : ""}>
-      <dt className="text-[11px] uppercase tracking-wider text-slate-500">{label}</dt>
+      <dt className="text-[11px] uppercase tracking-wider text-ink-mute">{label}</dt>
       <dd
-        className={`text-slate-300 ${mono ? "font-mono text-[12.5px]" : ""} ${truncate ? "truncate" : ""}`}
+        className={`text-ink-soft ${mono ? "font-mono text-[12.5px]" : ""} ${truncate ? "truncate" : ""}`}
         title={truncate ? value : undefined}
       >
         {value}

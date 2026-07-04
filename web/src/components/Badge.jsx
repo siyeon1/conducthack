@@ -1,14 +1,14 @@
-// Badge.jsx — small status/provenance chips shared across cells.
+// Badge.jsx — small status/provenance chips shared across cells (shft trust palette).
 
 // Provenance badge: green "✓ verified" (parsed) vs amber "~ inferred" (LLM guess).
 // This single honesty signal scores under both "technical execution" and "control".
 export function VerifiedBadge({ verified }) {
   return verified ? (
-    <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[11px] font-medium text-emerald-300">
+    <span className="badge b-verified">
       <span aria-hidden>✓</span> verified
     </span>
   ) : (
-    <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[11px] font-medium text-amber-300">
+    <span className="badge b-inferred">
       <span aria-hidden>~</span> inferred
     </span>
   );
@@ -20,12 +20,12 @@ export function VerifiedBadge({ verified }) {
 export function InGraphBadge({ inGraph }) {
   if (inGraph === undefined || inGraph === null) return null;
   return inGraph ? (
-    <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[11px] font-medium text-emerald-300">
+    <span className="badge b-verified">
       <span aria-hidden>✓</span> in graph
     </span>
   ) : (
     <span
-      className="inline-flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[11px] font-medium text-amber-300"
+      className="badge b-inferred"
       title="Named by the model but not present in the deterministic dependency graph"
     >
       <span aria-hidden>~</span> narrated
@@ -34,9 +34,9 @@ export function InGraphBadge({ inGraph }) {
 }
 
 const RISK_STYLES = {
-  high: "border-rose-500/40 bg-rose-500/10 text-rose-300",
-  medium: "border-amber-500/40 bg-amber-500/10 text-amber-300",
-  low: "border-slate-500/40 bg-slate-500/10 text-slate-300",
+  high: "border-danger/40 bg-danger-tint text-[#b02138]",
+  medium: "border-inferred/40 bg-inferred-tint text-[#8a6410]",
+  low: "border-line bg-paper-dark text-ink-soft",
 };
 
 export function RiskBadge({ risk }) {
@@ -52,13 +52,13 @@ export function RiskBadge({ risk }) {
 }
 
 const STATUS_STYLES = {
-  pending: "border-slate-600/50 bg-slate-700/30 text-slate-400",
-  running: "border-indigo-500/40 bg-indigo-500/10 text-indigo-300",
-  awaiting_approval: "border-amber-500/50 bg-amber-500/15 text-amber-200",
-  approved: "border-emerald-500/40 bg-emerald-500/10 text-emerald-300",
-  rejected: "border-rose-500/40 bg-rose-500/10 text-rose-300",
-  done: "border-emerald-500/40 bg-emerald-500/10 text-emerald-300",
-  error: "border-rose-500/50 bg-rose-500/15 text-rose-200",
+  pending: "border-line bg-paper-dark text-ink-mute",
+  running: "border-brand-400/40 bg-brand-50 text-brand-700",
+  awaiting_approval: "border-coral-400/50 bg-coral-tint text-magenta-700",
+  approved: "border-verified/40 bg-verified-tint text-verified",
+  rejected: "border-danger/40 bg-danger-tint text-[#b02138]",
+  done: "border-verified/40 bg-verified-tint text-verified",
+  error: "border-danger/50 bg-danger-tint text-[#b02138]",
 };
 
 const STATUS_LABELS = {

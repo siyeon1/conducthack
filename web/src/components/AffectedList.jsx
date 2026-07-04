@@ -7,10 +7,10 @@ import { RiskBadge, InGraphBadge } from "./Badge.jsx";
 // Impact list was too long on screen.
 const RISK_ORDER = ["high", "medium", "low"];
 const RISK_META = {
-  high: { label: "High risk", accent: "border-l-rose-500/70", tint: "text-rose-300" },
-  medium: { label: "Medium risk", accent: "border-l-amber-500/70", tint: "text-amber-300" },
-  low: { label: "Low risk", accent: "border-l-slate-500/60", tint: "text-slate-400" },
-  other: { label: "Unclassified", accent: "border-l-slate-600/50", tint: "text-slate-400" },
+  high: { label: "High risk", accent: "border-l-danger/70", tint: "text-danger" },
+  medium: { label: "Medium risk", accent: "border-l-inferred/70", tint: "text-[#8a6410]" },
+  low: { label: "Low risk", accent: "border-l-ink-mute/60", tint: "text-ink-soft" },
+  other: { label: "Unclassified", accent: "border-l-line", tint: "text-ink-soft" },
 };
 
 function riskKey(r) {
@@ -20,13 +20,13 @@ function riskKey(r) {
 
 function Row({ a }) {
   return (
-    <li className="animate-fade-in flex flex-col gap-1 rounded-lg border border-slate-700/50 bg-ink-950/40 p-3 sm:flex-row sm:items-start sm:gap-3">
+    <li className="animate-fade-in flex flex-col gap-1 rounded-lg border border-line bg-paper p-3 sm:flex-row sm:items-start sm:gap-3">
       <div className="flex flex-wrap items-center gap-2 sm:w-56 sm:shrink-0">
-        <span className="font-mono text-sm font-semibold text-slate-100">{a.program}</span>
+        <span className="font-mono text-sm font-semibold text-ink">{a.program}</span>
         <RiskBadge risk={a.risk} />
         <InGraphBadge inGraph={a.in_graph} />
       </div>
-      <p className="text-sm text-slate-400">{a.relationship}</p>
+      <p className="text-sm text-ink-soft">{a.relationship}</p>
     </li>
   );
 }
@@ -41,17 +41,17 @@ function Group({ rk, items, defaultOpen }) {
         onClick={() => setOpen((o) => !o)}
         className="flex w-full items-center gap-2 py-1.5 text-left"
       >
-        <span className={`text-[11px] text-slate-500 transition-transform ${open ? "rotate-90" : ""}`}>
+        <span className={`text-[11px] text-ink-mute transition-transform ${open ? "rotate-90" : ""}`}>
           ▸
         </span>
         <span className={`text-xs font-semibold uppercase tracking-wider ${meta.tint}`}>
           {meta.label}
         </span>
-        <span className="rounded-full bg-slate-700/50 px-1.5 py-0.5 text-[11px] font-medium text-slate-300">
+        <span className="rounded-full bg-paper-dark px-1.5 py-0.5 text-[11px] font-medium text-ink-soft">
           {items.length}
         </span>
         {!open && (
-          <span className="min-w-0 flex-1 truncate font-mono text-[11px] text-slate-500">
+          <span className="min-w-0 flex-1 truncate font-mono text-[11px] text-ink-mute">
             {items.map((a) => a.program).join(" · ")}
           </span>
         )}
@@ -81,13 +81,13 @@ export default function AffectedList({ affected }) {
 
   return (
     <div className="space-y-2">
-      <p className="text-[11px] text-slate-500">
-        <span className="font-semibold text-slate-300">{items.length}</span> components in the blast
+      <p className="text-[11px] text-ink-mute">
+        <span className="font-semibold text-ink-soft">{items.length}</span> components in the blast
         radius
         {highCount ? (
           <>
             {" · "}
-            <span className="font-semibold text-rose-300">{highCount}</span> high-risk edit{" "}
+            <span className="font-semibold text-danger">{highCount}</span> high-risk edit{" "}
             {highCount === 1 ? "site" : "sites"} shown first
           </>
         ) : null}

@@ -32,45 +32,45 @@ export default function SourceView({ name, onClose }) {
 
   return (
     <div className="fixed inset-0 z-50 flex" onClick={onClose}>
-      <div className="flex-1 bg-black/50" />
+      <div className="flex-1 bg-ink/40" />
       <div
-        className="flex h-full w-full max-w-3xl flex-col border-l border-slate-700/60 bg-ink-950 shadow-2xl"
+        className="flex h-full w-full max-w-3xl flex-col border-l border-line bg-white shadow-pop"
         onClick={(e) => e.stopPropagation()}
       >
-        <header className="flex items-center gap-2 border-b border-slate-700/50 bg-ink-900/60 px-4 py-3">
-          <span className="font-mono text-sm font-semibold text-slate-100">{name}</span>
+        <header className="flex items-center gap-2 border-b border-line bg-paper px-4 py-3">
+          <span className="font-mono text-sm font-semibold text-ink">{name}</span>
           {src && (
-            <span className="font-mono text-[11px] text-slate-500">
+            <span className="font-mono text-[11px] text-ink-mute">
               {src.file} · {src.n_lines} lines
             </span>
           )}
-          <span className="ml-auto rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[11px] font-medium text-emerald-300">
+          <span className="ml-auto rounded-full border border-verified/30 bg-verified-tint px-2 py-0.5 text-[11px] font-medium text-verified">
             ✓ source · parsed
           </span>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg px-2 py-1 text-slate-400 transition hover:bg-slate-800 hover:text-slate-200"
+            className="rounded-lg px-2 py-1 text-ink-soft transition hover:bg-paper-dark hover:text-ink"
             aria-label="Close source"
           >
             ✕
           </button>
         </header>
-        <div className="flex-1 overflow-auto bg-ink-950">
+        <div className="flex-1 overflow-auto bg-white">
           {err ? (
-            <div className="p-4 text-sm text-rose-300">
+            <div className="p-4 text-sm text-danger">
               Could not load source: {err.error || String(err)}
             </div>
           ) : !src ? (
-            <div className="p-4 text-sm text-slate-500">Loading source…</div>
+            <div className="p-4 text-sm text-ink-mute">Loading source…</div>
           ) : (
             <pre className="min-w-full font-mono text-[12px] leading-relaxed">
               {lines.map((ln, i) => (
-                <div key={i} className="flex hover:bg-slate-800/40">
-                  <span className="w-12 shrink-0 select-none pr-3 text-right text-slate-600">
+                <div key={i} className="flex hover:bg-paper">
+                  <span className="w-12 shrink-0 select-none pr-3 text-right text-ink-mute">
                     {i + 1}
                   </span>
-                  <span className="whitespace-pre pr-4 text-slate-300">{ln || " "}</span>
+                  <span className="whitespace-pre pr-4 text-ink-soft">{ln || " "}</span>
                 </div>
               ))}
             </pre>

@@ -45,16 +45,16 @@ export default function LedgerPanel({ sessionId, entries, onRefresh }) {
   }
 
   return (
-    <section className="rounded-2xl border border-slate-700/60 bg-ink-900/60 shadow-xl shadow-black/20 backdrop-blur-sm">
-      <header className="flex flex-wrap items-center gap-3 border-b border-slate-700/50 px-5 py-4">
-        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/15 text-emerald-300">
+    <section className="rounded-2xl border border-line bg-paper-light shadow-card">
+      <header className="flex flex-wrap items-center gap-3 border-b border-line px-5 py-4">
+        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-verified-tint text-verified">
           ⛓
         </span>
         <div className="flex-1">
-          <h2 className="text-base font-semibold text-slate-100">
+          <h2 className="text-base font-semibold text-ink">
             Tamper-evident ledger
           </h2>
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-ink-soft">
             SHA-256 hash-chained · RFC 8785 canonical JSON · every approval appended
           </p>
         </div>
@@ -63,7 +63,7 @@ export default function LedgerPanel({ sessionId, entries, onRefresh }) {
             type="button"
             onClick={doVerify}
             disabled={busy || !sessionId}
-            className="rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-3 py-1.5 text-sm font-semibold text-emerald-200 transition hover:bg-emerald-500/20 disabled:opacity-40"
+            className="rounded-lg border border-verified/40 bg-verified-tint px-3 py-1.5 text-sm font-semibold text-verified transition hover:brightness-95 disabled:opacity-40"
           >
             Verify integrity
           </button>
@@ -72,7 +72,7 @@ export default function LedgerPanel({ sessionId, entries, onRefresh }) {
             onClick={doTamper}
             disabled={busy || !sessionId || !list.length}
             title="Demo only: silently mutate a recorded entry to prove the chain detects it"
-            className="rounded-lg border border-rose-500/40 bg-rose-500/10 px-3 py-1.5 text-sm font-semibold text-rose-200 transition hover:bg-rose-500/20 disabled:opacity-40"
+            className="rounded-lg border border-danger/40 bg-danger-tint px-3 py-1.5 text-sm font-semibold text-[#b02138] transition hover:brightness-95 disabled:opacity-40"
           >
             ⚠ Tamper (demo)
           </button>
@@ -81,7 +81,7 @@ export default function LedgerPanel({ sessionId, entries, onRefresh }) {
 
       <div className="px-5 py-4">
         {err && (
-          <div className="mb-3 rounded-lg border border-rose-500/40 bg-rose-500/10 px-4 py-2 text-sm text-rose-200">
+          <div className="mb-3 rounded-lg border border-danger/40 bg-danger-tint px-4 py-2 text-sm text-[#b02138]">
             <span className="font-semibold">Error:</span> {err.error}
           </div>
         )}
@@ -90,8 +90,8 @@ export default function LedgerPanel({ sessionId, entries, onRefresh }) {
           <div
             className={`mb-4 flex items-center gap-2 rounded-lg border px-4 py-3 text-sm font-medium ${
               verify.verified
-                ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-200"
-                : "border-rose-500/50 bg-rose-500/15 text-rose-200"
+                ? "border-verified/40 bg-verified-tint text-verified"
+                : "border-danger/50 bg-danger-tint text-[#b02138]"
             }`}
           >
             {verify.verified ? (
@@ -111,14 +111,14 @@ export default function LedgerPanel({ sessionId, entries, onRefresh }) {
         )}
 
         {!list.length ? (
-          <div className="rounded-lg border border-dashed border-slate-700/60 bg-ink-950/40 px-4 py-8 text-center text-sm text-slate-500">
+          <div className="rounded-lg border border-dashed border-line bg-paper px-4 py-8 text-center text-sm text-ink-mute">
             No entries yet. Approve a proposal to append the first ledger entry.
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[860px] border-collapse text-sm">
               <thead>
-                <tr className="text-left text-[11px] uppercase tracking-wider text-slate-500">
+                <tr className="text-left text-[11px] uppercase tracking-wider text-ink-mute">
                   <th className="px-2 py-2 font-medium">#</th>
                   <th className="px-2 py-2 font-medium">Intent</th>
                   <th className="px-2 py-2 font-medium">Programs</th>
@@ -134,14 +134,14 @@ export default function LedgerPanel({ sessionId, entries, onRefresh }) {
                   return (
                     <tr
                       key={e.index ?? i}
-                      className={`border-t border-slate-700/40 align-top ${
-                        broken ? "bg-rose-500/10" : ""
+                      className={`border-t border-line align-top ${
+                        broken ? "bg-danger-tint" : ""
                       }`}
                     >
-                      <td className="px-2 py-2.5 font-mono text-slate-400">
+                      <td className="px-2 py-2.5 font-mono text-ink-soft">
                         {e.index}
                       </td>
-                      <td className="max-w-[260px] px-2 py-2.5 text-slate-300">
+                      <td className="max-w-[260px] px-2 py-2.5 text-ink-soft">
                         {e.intent}
                       </td>
                       <td className="px-2 py-2.5">
@@ -149,7 +149,7 @@ export default function LedgerPanel({ sessionId, entries, onRefresh }) {
                           {(e.programs || []).map((p) => (
                             <span
                               key={p}
-                              className="rounded bg-slate-700/40 px-1.5 py-0.5 font-mono text-[11px] text-slate-300"
+                              className="rounded bg-paper-dark px-1.5 py-0.5 font-mono text-[11px] text-ink-soft"
                             >
                               {p}
                             </span>
@@ -157,24 +157,24 @@ export default function LedgerPanel({ sessionId, entries, onRefresh }) {
                         </div>
                       </td>
                       <td className="px-2 py-2.5">
-                        <span className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[11px] font-medium text-emerald-300">
+                        <span className="badge b-verified">
                           {e.decision}
                         </span>
                       </td>
-                      <td className="max-w-[240px] px-2 py-2.5 text-[12px] italic text-slate-400">
+                      <td className="max-w-[240px] px-2 py-2.5 text-[12px] italic text-ink-soft">
                         {e.rationale ? (
                           `“${e.rationale}”`
                         ) : (
-                          <span className="not-italic text-slate-600">—</span>
+                          <span className="not-italic text-ink-mute">—</span>
                         )}
                       </td>
-                      <td className="px-2 py-2.5 font-mono text-[12px] text-slate-400">
+                      <td className="px-2 py-2.5 font-mono text-[12px] text-ink-soft">
                         {e.approver}
                       </td>
-                      <td className="px-2 py-2.5 font-mono text-[11px] text-slate-500">
+                      <td className="px-2 py-2.5 font-mono text-[11px] text-ink-mute">
                         {short(e.prev_hash)}{" "}
-                        <span className="text-slate-600">→</span>{" "}
-                        <span className={broken ? "text-rose-300" : "text-slate-400"}>
+                        <span className="text-ink-mute">→</span>{" "}
+                        <span className={broken ? "text-[#b02138]" : "text-ink-soft"}>
                           {short(e.entry_hash)}
                         </span>
                       </td>

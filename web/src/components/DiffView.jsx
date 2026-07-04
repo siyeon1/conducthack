@@ -1,27 +1,27 @@
 // DiffView.jsx — renders a unified diff: added lines green, removed red,
-// hunk headers indigo, context muted. Monospace, scrolls inside its own box.
+// hunk headers brand, context muted. Monospace, scrolls inside its own box.
 export default function DiffView({ diff }) {
   const lines = (diff || "").replace(/\n$/, "").split("\n");
 
   const classify = (line) => {
     if (line.startsWith("+++") || line.startsWith("---"))
-      return "text-slate-500";
+      return "text-ink-mute";
     if (line.startsWith("@@"))
-      return "bg-indigo-500/10 text-indigo-300";
+      return "bg-brand-50 text-brand-700";
     if (line.startsWith("+"))
-      return "bg-emerald-500/10 text-emerald-300";
+      return "bg-verified-tint text-verified";
     if (line.startsWith("-"))
-      return "bg-rose-500/10 text-rose-300";
-    return "text-slate-400";
+      return "bg-danger-tint text-[#b02138]";
+    return "text-ink-soft";
   };
 
   return (
-    <div className="overflow-hidden rounded-lg border border-slate-700/60 bg-ink-950/80">
-      <div className="flex items-center justify-between border-b border-slate-700/50 bg-ink-900/60 px-3 py-1.5">
-        <span className="font-mono text-[11px] uppercase tracking-wider text-slate-500">
+    <div className="overflow-hidden rounded-lg border border-line bg-white">
+      <div className="flex items-center justify-between border-b border-line bg-paper px-3 py-1.5">
+        <span className="font-mono text-[11px] uppercase tracking-wider text-ink-mute">
           unified diff · proposal
         </span>
-        <span className="rounded border border-amber-500/30 bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-amber-300">
+        <span className="rounded border border-inferred/30 bg-inferred-tint px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-[#8a6410]">
           not yet applied
         </span>
       </div>
