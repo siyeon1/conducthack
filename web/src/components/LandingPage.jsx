@@ -1,62 +1,84 @@
-// LandingPage.jsx — the pitch page, set in the shft brand system (brand kit v1.0):
-// dark hero (the kit's one confident dark section) → regulator-sourced proof strip →
-// plain-English steps → human-in-control → provable-not-promised → why-not-a-chatbot →
-// regulatory map → the signature line. Copy anchored in FCA/PRA figures only.
+import { useEffect, useRef, useState } from "react";
+
+// LandingPage.jsx — the shft product site (brand kit v1.0, §08 "Brand in action" shape):
+// sticky nav → dark hero with dual CTA + ledger proof card → the three principles → proof
+// sections → get-access → footer. Copy is the kit's own wording; stats are FCA/PRA-sourced.
 const STATS = [
+  { big: "£48.65m", label: "TSB fine for a failed change", source: "FCA & PRA, 2022–23" },
+  { big: "1 in 4", label: "incidents caused by change", source: "FCA · 1m+ changes reviewed" },
+  { big: "90%+", label: "firms still on legacy tech", source: "FCA, 2021" },
+];
+
+const PRINCIPLES = [
   {
-    big: "£48.65m",
-    text: "the fine when one UK bank's system change went wrong. The CEO resigned. The CIO was fined personally.",
-    source: "FCA & PRA, 2022–23 (TSB)",
+    n: "01",
+    k: "Parse, don't infer",
+    d: "A deterministic parser builds the dependency graph. The AI proposes; the parser grades every claim verified or inferred.",
   },
   {
-    big: "1 in 4",
-    text: "high-severity incidents at UK financial firms are caused by failed technology changes.",
-    source: "FCA review of 1m+ production changes, 2021",
+    n: "02",
+    k: "Control beats autonomy",
+    d: "There is no deploy button. A named engineer edits, approves and signs every change with a typed justification.",
   },
   {
-    big: "90%+",
-    text: "of UK financial firms still depend on legacy technology to serve customers.",
-    source: "FCA, 2021",
+    n: "03",
+    k: "A promise becomes a proof",
+    d: "Each approval is hash-chained into a tamper-evident ledger. Edit the history and verification fails — visibly, immediately.",
   },
 ];
 
 const REG_MAP = [
-  {
-    reg: "FCA Consumer Duty",
-    demand: "Boards must evidence good customer outcomes.",
-    us: "The demo change is a genuine Consumer Duty remediation — and the ledger is the board-ready evidence.",
-  },
-  {
-    reg: "SM&CR",
-    demand: "Named senior individuals are personally accountable for change.",
-    us: "Every approval carries a named person and a typed rationale, sealed in a tamper-evident chain.",
-  },
-  {
-    reg: "Operational resilience (PS21/3)",
-    demand: "Firms must map the technology under important business services — in force since 31 March 2025.",
-    us: "The parsed dependency graph and blast-radius stage are that mapping, at code level.",
-  },
-  {
-    reg: "EU AI Act, Article 14",
-    demand: "High-risk AI must be designed for effective human oversight.",
-    us: "Nothing executes without approval; every AI claim is labelled verified or inferred so the human can calibrate trust.",
-  },
+  { reg: "FCA Consumer Duty", demand: "Boards must evidence good customer outcomes.", us: "The demo change is a genuine Consumer Duty remediation — and the ledger is the board-ready evidence." },
+  { reg: "SM&CR", demand: "Named senior individuals are personally accountable for change.", us: "Every approval carries a named person and a typed rationale, sealed in a tamper-evident chain." },
+  { reg: "Operational resilience (PS21/3)", demand: "Firms must map the technology under important business services — in force since 31 March 2025.", us: "The parsed dependency graph and blast-radius stage are that mapping, at code level." },
+  { reg: "EU AI Act, Article 14", demand: "High-risk AI must be designed for effective human oversight.", us: "Nothing executes without approval; every AI claim is labelled verified or inferred so the human can calibrate trust." },
 ];
 
 export default function LandingPage({ onEnter }) {
+  const [scrolled, setScrolled] = useState(false);
+  const heroRef = useRef(null);
+
+  useEffect(() => {
+    const el = heroRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") return undefined;
+    const io = new IntersectionObserver(([e]) => setScrolled(!e.isIntersecting), {
+      rootMargin: "-64px 0px 0px 0px",
+      threshold: 0,
+    });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
+  const link = scrolled ? "text-ink-soft hover:text-ink" : "text-white/70 hover:text-white";
+
   return (
     <div className="min-h-full">
-      {/* ---------- HERO — the one confident dark section ---------- */}
-      <header className="bg-hero text-white">
-        <div className="mx-auto max-w-5xl px-5 pb-16 pt-14 sm:px-8">
-          <div className="mb-10 flex items-center justify-between">
-            <span className="wordmark text-3xl text-brand-400">shft</span>
-            <span className="badge b-brand">✦ governed change · not autonomous AI</span>
+      {/* ---------- NAV ---------- */}
+      <nav
+        className={`sticky top-0 z-40 transition-colors duration-enter ease-brand ${
+          scrolled ? "border-b border-line bg-paper-light/90 backdrop-blur" : "bg-hero"
+        }`}
+      >
+        <div className="mx-auto flex max-w-6xl items-center gap-6 px-5 py-3.5 sm:px-8">
+          <span className={`wordmark text-2xl ${scrolled ? "text-brand-500" : "text-brand-400"}`}>shft</span>
+          <div className="ml-3 hidden items-center gap-6 text-sm font-medium md:flex">
+            <a href="#product" className={link}>Product</a>
+            <a href="#proof" className={link}>Proof</a>
+            <a href="#pricing" className={link}>Pricing</a>
           </div>
+          <button type="button" onClick={onEnter} className="btn btn-primary ml-auto" style={{ padding: "8px 15px", fontSize: 13 }}>
+            See the proof
+          </button>
+        </div>
+      </nav>
 
-          <div className="grid items-center gap-10 lg:grid-cols-[1.2fr_0.8fr]">
+      {/* ---------- HERO ---------- */}
+      <header ref={heroRef} className="bg-hero text-white">
+        <div className="mx-auto max-w-6xl px-5 pb-20 pt-12 sm:px-8">
+          <div className="grid items-center gap-10 lg:grid-cols-[1.15fr_0.85fr]">
             <div>
-              <h1 className="font-sans text-4xl font-extrabold leading-[1.05] tracking-display sm:text-5xl">
+              <p className="eyebrow mb-5 text-brand-400">Governed change · not autonomous AI</p>
+              <h1 className="font-sans text-4xl font-extrabold leading-[1.05] tracking-display sm:text-[52px]">
                 Change the code that runs banks — and prove you did it right.
               </h1>
               <p className="mt-5 max-w-xl text-lg leading-relaxed text-white/70">
@@ -67,13 +89,20 @@ export default function LandingPage({ onEnter }) {
                 <button type="button" onClick={onEnter} className="btn btn-primary">
                   See the proof →
                 </button>
-                <span className="text-xs text-white/40">
-                  Live demo on IBM&rsquo;s own sample banking system (CBSA).
-                </span>
+                <button type="button" onClick={onEnter} className="btn btn-coral">
+                  Book a demo
+                </button>
+              </div>
+              <div className="eyebrow mt-6 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-white/40">
+                <span>Fintech</span>
+                <span className="text-white/20">·</span>
+                <span>RegTech</span>
+                <span className="text-white/20">·</span>
+                <span>Developer tooling</span>
               </div>
             </div>
 
-            {/* Mini ledger proof card (the kit's hero visual) */}
+            {/* Ledger proof card — the kit's hero visual */}
             <div className="rounded-xl border border-white/10 bg-white/[0.04] p-4 font-mono text-[12.5px]">
               <div className="mb-3 flex items-center justify-between">
                 <span className="badge b-verified">✓ Verified · parsed</span>
@@ -95,20 +124,41 @@ export default function LandingPage({ onEnter }) {
         </div>
       </header>
 
-      <main className="mx-auto max-w-4xl px-5 pb-24 sm:px-8">
+      <main className="mx-auto max-w-5xl px-5 sm:px-8">
         {/* ---------- STAT STRIP ---------- */}
-        <section className="-mt-8 mb-16 grid gap-3 sm:grid-cols-3">
+        <section className="-mt-8 mb-20 grid gap-3 sm:grid-cols-3">
           {STATS.map((s) => (
             <div key={s.big} className="rounded-xl border border-line bg-paper-light p-5 text-center shadow-card">
               <div className="font-sans text-3xl font-extrabold tracking-display text-brand-500">{s.big}</div>
-              <p className="mt-2 text-[13px] leading-relaxed text-ink-soft">{s.text}</p>
-              <p className="eyebrow mt-3 text-ink-mute">{s.source}</p>
+              <p className="mt-2 text-[13.5px] font-medium leading-snug text-ink">{s.label}</p>
+              <p className="eyebrow mt-2 text-ink-mute">{s.source}</p>
             </div>
           ))}
         </section>
 
+        {/* ---------- PRINCIPLES (id=product) ---------- */}
+        <section id="product" className="mb-20 scroll-mt-24">
+          <p className="eyebrow text-center text-brand-500">The idea</p>
+          <h2 className="mt-2 text-center font-sans text-3xl font-extrabold tracking-display text-ink">
+            Change, made provable.
+          </h2>
+          <p className="mx-auto mt-3 max-w-2xl text-center text-[15px] leading-relaxed text-ink-soft">
+            A shift, not a rewrite. shft governs change in the COBOL banks are keeping — it doesn&rsquo;t migrate
+            it away.
+          </p>
+          <div className="mt-8 grid gap-4 md:grid-cols-3">
+            {PRINCIPLES.map((p) => (
+              <div key={p.n} className="rounded-2xl border border-line bg-paper-light p-6 shadow-card">
+                <div className="eyebrow text-brand-400">{p.n}</div>
+                <h3 className="mt-2 font-sans text-lg font-bold text-ink">{p.k}</h3>
+                <p className="mt-2 text-[14px] leading-relaxed text-ink-soft">{p.d}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
         {/* ---------- HOW IT WORKS ---------- */}
-        <section className="mb-16">
+        <section className="mb-20">
           <h2 className="mb-6 text-center font-sans text-2xl font-bold tracking-tight text-ink">How it works</h2>
           <div className="space-y-4">
             <Step n="1" title="Say what needs to change, in plain English.">
@@ -132,7 +182,7 @@ export default function LandingPage({ onEnter }) {
         </section>
 
         {/* ---------- HUMAN IN CONTROL ---------- */}
-        <section className="mb-16 rounded-2xl border border-line bg-paper-light p-7 shadow-card">
+        <section className="mb-20 rounded-2xl border border-line bg-paper-light p-7 shadow-card">
           <h2 className="font-sans text-xl font-bold text-ink">&ldquo;The AI never touches the code. People do.&rdquo;</h2>
           <p className="mt-3 text-[15px] leading-relaxed text-ink-soft">
             There is <b className="text-ink">no deploy button</b> in this product. It reads code and proposes; a
@@ -149,9 +199,10 @@ export default function LandingPage({ onEnter }) {
           </p>
         </section>
 
-        {/* ---------- PROVABLE ---------- */}
-        <section className="mb-16 rounded-2xl border border-verified/30 bg-verified-tint/60 p-7">
-          <h2 className="font-sans text-xl font-bold text-verified">
+        {/* ---------- PROVABLE (id=proof) ---------- */}
+        <section id="proof" className="mb-20 scroll-mt-24 rounded-2xl border border-verified/30 bg-verified-tint/60 p-7">
+          <span className="badge b-danger">✕ Tamper detected</span>
+          <h2 className="mt-3 font-sans text-xl font-bold text-verified">
             &ldquo;An audit trail you can test, not just read.&rdquo;
           </h2>
           <p className="mt-3 text-[15px] leading-relaxed text-ink-soft">
@@ -165,7 +216,7 @@ export default function LandingPage({ onEnter }) {
         </section>
 
         {/* ---------- WHY NOT A CHATBOT ---------- */}
-        <section className="mb-16">
+        <section className="mb-20">
           <h2 className="mb-2 text-center font-sans text-2xl font-bold tracking-tight text-ink">
             &ldquo;A chatbot gives you an answer. We give you evidence.&rdquo;
           </h2>
@@ -187,15 +238,10 @@ export default function LandingPage({ onEnter }) {
               hash-chained record of who approved what, why, and on what verified evidence — is.
             </span>
           </blockquote>
-          <p className="mx-auto mt-4 max-w-2xl text-center text-[13px] text-ink-soft">
-            Every funded competitor sells the <i>exit</i> from COBOL — the multi-year migration most firms start
-            and never finish. <b className="text-ink">A shift, not a rewrite</b>: shft is for the decades in
-            between — changing the code you keep. Safely. In place.
-          </p>
         </section>
 
         {/* ---------- REGULATORY MAP ---------- */}
-        <section className="mb-16">
+        <section className="mb-20">
           <h2 className="mb-5 text-center font-sans text-2xl font-bold tracking-tight text-ink">
             Built for the rules banks already live under
           </h2>
@@ -213,7 +259,7 @@ export default function LandingPage({ onEnter }) {
         </section>
 
         {/* ---------- SIGNATURE LINE ---------- */}
-        <section className="mb-16 text-center">
+        <section className="mb-20 text-center">
           <p className="mx-auto max-w-2xl text-lg font-medium leading-relaxed text-ink-soft">
             &ldquo;You restore a listed building under consent: survey first, small documented alterations, a
             named person approving each one, everything in the register.
@@ -223,25 +269,61 @@ export default function LandingPage({ onEnter }) {
           </p>
         </section>
 
-        {/* ---------- CLOSING CTA ---------- */}
-        <section className="text-center">
-          <h2 className="font-sans text-xl font-bold text-ink">
-            The banks that run Britain were built to last. Help them change safely.
-          </h2>
-          <p className="mx-auto mt-2 max-w-xl text-sm text-ink-soft">
-            Watch a real sixty-year-old banking system get a real regulatory change — planned, approved, applied
-            and sealed into the record.
-          </p>
-          <button type="button" onClick={onEnter} className="btn btn-primary mt-6">
-            See the proof →
-          </button>
-          <p className="mt-10 text-[11px] text-ink-mute">
-            <span className="wordmark text-ink-soft">shft</span> · a shift, not a rewrite · built at the UK AI
-            Agent Hack × Conduct.AI · demo corpus: IBM&rsquo;s CICS Banking Sample Application · proposal-only by
-            design — no write access to source or production.
-          </p>
+        {/* ---------- GET ACCESS (id=pricing) ---------- */}
+        <section id="pricing" className="mb-16 scroll-mt-24">
+          <div className="rounded-2xl border border-brand-200 bg-brand-50 p-8 text-center shadow-card">
+            <p className="eyebrow text-brand-500">Get access</p>
+            <h2 className="mt-2 font-sans text-2xl font-extrabold tracking-tight text-ink">
+              Runs in your environment. Talk to us.
+            </h2>
+            <p className="mx-auto mt-3 max-w-xl text-[15px] leading-relaxed text-ink-soft">
+              Parsing, the dependency graph and the ledger stay local; the model runs in your own cloud or under
+              a zero-retention agreement. See the proof, then let&rsquo;s map it to your estate.
+            </p>
+            <div className="mt-6 flex flex-wrap justify-center gap-3">
+              <button type="button" onClick={onEnter} className="btn btn-primary">
+                See the proof →
+              </button>
+              <button type="button" onClick={onEnter} className="btn btn-ghost">
+                Book a demo
+              </button>
+            </div>
+          </div>
         </section>
       </main>
+
+      {/* ---------- FOOTER ---------- */}
+      <footer className="border-t border-line bg-paper-light">
+        <div className="mx-auto max-w-6xl px-5 py-10 sm:px-8">
+          <div className="grid gap-8 sm:grid-cols-[1.6fr_1fr_1fr]">
+            <div>
+              <span className="wordmark text-2xl text-brand-500">shft</span>
+              <p className="mt-2 max-w-xs text-[13px] leading-relaxed text-ink-soft">
+                The governed way to change legacy code. A shift, not a rewrite.
+              </p>
+            </div>
+            <div>
+              <div className="eyebrow mb-3 text-ink-mute">Product</div>
+              <ul className="space-y-2 text-sm text-ink-soft">
+                <li><a href="#product" className="hover:text-ink">How it works</a></li>
+                <li><a href="#proof" className="hover:text-ink">Proof</a></li>
+                <li><a href="#pricing" className="hover:text-ink">Get access</a></li>
+              </ul>
+            </div>
+            <div>
+              <div className="eyebrow mb-3 text-ink-mute">Built at</div>
+              <ul className="space-y-2 text-sm text-ink-soft">
+                <li>UK AI Agent Hack × Conduct.AI</li>
+                <li>Demo corpus: IBM CBSA</li>
+              </ul>
+            </div>
+          </div>
+          <div className="mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-5 text-[11px] text-ink-mute">
+            <span>© 2026 shft · proposal-only by design — no write access to source or production.</span>
+            <span className="eyebrow text-brand-400">parse, don&rsquo;t infer</span>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
