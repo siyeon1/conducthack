@@ -614,15 +614,23 @@ async def impact_node(state: GraphState) -> dict:
                 focus_set.add(cb)
     focus = sorted(focus_set)
 
-    sub = subgraph_for(_full_graph(), seed_progs, focus_copybooks=focus or None) if seed_progs else {"nodes": [], "edges": []}
+    # Add-field / copybook-targeted changes resolve NO seed programs (the fields are new), but
+    # the focus set still names the copybook — and changing a shared record's layout has a real,
+    # deterministic blast radius: the recompile set, i.e. every program with a parsed COPY edge
+    # to it. subgraph_for's focus expansion computes exactly that with empty seeds.
+    if seed_progs or focus:
+        sub = subgraph_for(_full_graph(), seed_progs, focus_copybooks=focus or None)
+    else:
+        sub = {"nodes": [], "edges": []}
 
+    edit_sites = seed_progs or focus
     metrics = graph_metrics(sub, corpus)
-    metrics["lines_in_scope"] = sum(corpus.get(n).n_lines for n in seed_progs if corpus.get(n))
+    metrics["lines_in_scope"] = sum(corpus.get(n).n_lines for n in edit_sites if corpus.get(n))
     metrics["copybooks_resolved"] = f"{len(corpus.copybooks)}/{len(corpus.copybooks)}"
 
     graph_desc = _describe_graph(sub)
     user = (
-        f"Change request: {state.get('change_request','')}\nEdit sites: {', '.join(seed_progs) or '(none)'}\n\n"
+        f"Change request: {state.get('change_request','')}\nEdit sites: {', '.join(edit_sites) or '(none)'}\n\n"
         f"Dependency graph (ground truth — narrate only these):\n{graph_desc}\n\nNarrate the blast radius."
     )
     try:
