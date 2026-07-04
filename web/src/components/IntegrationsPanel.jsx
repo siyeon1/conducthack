@@ -43,37 +43,37 @@ export default function IntegrationsPanel({ open, onClose }) {
   const outbox = (status && status.outbox) || [];
 
   return (
-    <div className="absolute right-0 top-11 z-20 w-[380px] rounded-xl border border-slate-600/60 bg-ink-900/95 p-3 shadow-2xl backdrop-blur-sm">
+    <div className="absolute right-0 top-11 z-20 w-[380px] rounded-xl border border-line bg-paper-light p-3 shadow-pop">
       <div className="mb-2 flex items-center justify-between">
-        <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Integrations</span>
-        <button type="button" onClick={onClose} className="rounded px-1.5 text-slate-500 hover:text-slate-300">
+        <span className="text-[11px] font-semibold uppercase tracking-wider text-ink-mute">Integrations</span>
+        <button type="button" onClick={onClose} className="rounded px-1.5 text-ink-mute hover:text-ink-soft">
           ✕
         </button>
       </div>
 
       {/* Slack */}
-      <div className="mb-2 rounded-lg border border-slate-700/60 bg-ink-950/50 p-2.5">
+      <div className="mb-2 rounded-lg border border-line bg-paper p-2.5">
         <div className="flex items-center gap-2">
-          <span className={`h-2 w-2 rounded-full ${connected ? "bg-emerald-400" : "bg-slate-500"}`} />
-          <span className="text-sm font-semibold text-slate-100">Slack</span>
-          <span className="text-[11px] text-slate-500">incoming webhook</span>
+          <span className={`h-2 w-2 rounded-full ${connected ? "bg-verified" : "bg-ink-mute"}`} />
+          <span className="text-sm font-semibold text-ink">Slack</span>
+          <span className="text-[11px] text-ink-mute">incoming webhook</span>
           <span
             className={`ml-auto rounded-full border px-2 py-0.5 text-[10px] font-medium ${
               connected
-                ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-300"
-                : "border-slate-600/60 bg-slate-700/30 text-slate-400"
+                ? "border-verified/40 bg-verified-tint text-verified"
+                : "border-line bg-paper-dark text-ink-mute"
             }`}
           >
             {connected ? "connected" : "not configured"}
           </span>
         </div>
         {!connected && (
-          <p className="mt-1.5 text-[11px] text-slate-500">
-            Set <code className="rounded bg-slate-700/50 px-1 font-mono">SLACK_WEBHOOK_URL</code> in the server .env and
+          <p className="mt-1.5 text-[11px] text-ink-mute">
+            Set <code className="rounded bg-paper-dark px-1 font-mono">SLACK_WEBHOOK_URL</code> in the server .env and
             restart — events below deliver to your channel.
           </p>
         )}
-        <p className="mt-1.5 border-t border-slate-700/40 pt-1.5 text-[11px] italic text-slate-500">
+        <p className="mt-1.5 border-t border-line pt-1.5 text-[11px] italic text-ink-soft">
           No approve button in chat — by design. Approval requires a typed, hash-chained justification in the cockpit.
           Notification is cheap; accountability is not.
         </p>
@@ -81,23 +81,23 @@ export default function IntegrationsPanel({ open, onClose }) {
 
       {/* Outbox */}
       <div className="mb-2">
-        <div className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+        <div className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-ink-mute">
           Event outbox {err ? "(status unavailable)" : ""}
         </div>
         {outbox.length === 0 ? (
-          <p className="rounded-lg border border-dashed border-slate-700/60 px-2 py-3 text-center text-[11px] text-slate-600">
+          <p className="rounded-lg border border-dashed border-line px-2 py-3 text-center text-[11px] text-ink-mute">
             No events yet — approve a plan or record a change and it will appear here.
           </p>
         ) : (
           <ul className="max-h-44 space-y-1 overflow-y-auto">
             {outbox.map((e, i) => (
-              <li key={i} className="rounded-lg border border-slate-700/50 bg-ink-950/40 px-2 py-1.5">
-                <div className="flex items-center gap-1.5 text-[12px] text-slate-200">
+              <li key={i} className="rounded-lg border border-line bg-paper px-2 py-1.5">
+                <div className="flex items-center gap-1.5 text-[12px] text-ink">
                   <span>{EVENT_ICON[e.event] || "•"}</span>
                   <span className="min-w-0 flex-1 truncate">{e.text}</span>
                 </div>
-                <div className="mt-0.5 flex items-center justify-between text-[10px] text-slate-500">
-                  <span className={/delivered/.test(e.status) ? "text-emerald-400" : /failed/.test(e.status) ? "text-rose-400" : ""}>
+                <div className="mt-0.5 flex items-center justify-between text-[10px] text-ink-mute">
+                  <span className={/delivered/.test(e.status) ? "text-verified" : /failed/.test(e.status) ? "text-danger" : ""}>
                     {e.status}
                   </span>
                   <span className="font-mono">{String(e.at || "").slice(11, 19)}</span>
@@ -110,12 +110,12 @@ export default function IntegrationsPanel({ open, onClose }) {
 
       {/* Roadmap */}
       <div>
-        <div className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500">Roadmap</div>
+        <div className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-ink-mute">Roadmap</div>
         <ul className="space-y-1">
           {ROADMAP.map((r) => (
-            <li key={r.name} className="flex items-baseline gap-2 rounded-lg px-2 py-1 opacity-60">
-              <span className="w-20 shrink-0 text-[12px] font-semibold text-slate-300">{r.name}</span>
-              <span className="text-[11px] text-slate-500">{r.note}</span>
+            <li key={r.name} className="flex items-baseline gap-2 rounded-lg px-2 py-1 opacity-70">
+              <span className="w-20 shrink-0 text-[12px] font-semibold text-ink-soft">{r.name}</span>
+              <span className="text-[11px] text-ink-mute">{r.note}</span>
             </li>
           ))}
         </ul>

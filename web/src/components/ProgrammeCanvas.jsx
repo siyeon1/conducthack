@@ -28,18 +28,18 @@ const SUGGESTED_PROMPTS = [
 
 const nodeTypes = { stage: StatusNode };
 
-// Verified edges (a parsed dependency exists) render solid emerald; inferred edges (LLM ordering,
-// or a human-added link) render dashed amber + animated. Styling lives on the edge objects so the
-// controlled edge state stays the single source of truth.
+// Verified edges (a parsed dependency exists) render solid green; inferred edges (LLM ordering,
+// or a human-added link) render dashed amber + animated — the shft trust palette. Styling lives on
+// the edge objects so the controlled edge state stays the single source of truth.
 function styleEdge(e) {
   const verified = !!(e.data && e.data.verified);
   return {
     ...e,
     animated: !verified,
-    markerEnd: { type: MarkerType.ArrowClosed, color: verified ? "#34d399" : "#f59e0b", width: 18, height: 18 },
-    style: { stroke: verified ? "#10b981" : "#f59e0b", strokeWidth: 1.6, strokeDasharray: verified ? undefined : "6 5" },
-    labelStyle: { fill: "#94a3b8", fontSize: 10 },
-    labelBgStyle: { fill: "#0f172a", fillOpacity: 0.85 },
+    markerEnd: { type: MarkerType.ArrowClosed, color: verified ? "#1C7C46" : "#B58318", width: 18, height: 18 },
+    style: { stroke: verified ? "#1C7C46" : "#B58318", strokeWidth: 1.6, strokeDasharray: verified ? undefined : "6 5" },
+    labelStyle: { fill: "#4A4652", fontSize: 10 },
+    labelBgStyle: { fill: "#FCFBFF", fillOpacity: 0.92 },
     labelBgPadding: [4, 2],
     labelBgBorderRadius: 4,
   };
@@ -210,15 +210,15 @@ export default function ProgrammeCanvas({
       <header className="mb-4">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-sky-500 text-lg shadow-lg shadow-indigo-900/40">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-500 text-lg text-white shadow-card">
               🛰️
             </div>
             <div>
-              <h1 className="text-xl font-bold tracking-tight text-slate-100">
-                Legacy Move
-                <span className="ml-2 text-slate-400">— Change Programme</span>
+              <h1 className="flex items-baseline gap-2 tracking-tight">
+                <span className="wordmark text-2xl text-brand-500">shft</span>
+                <span className="text-sm font-medium text-ink-soft">Change Programme</span>
               </h1>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-ink-soft">
                 A big compliance change, broken into reviewable sub-changes you approve one at a time.
               </p>
             </div>
@@ -232,7 +232,7 @@ export default function ProgrammeCanvas({
                 setShowLibrary(false);
               }}
               title="Workflow integrations — Slack notifications, outbox, roadmap"
-              className="rounded-lg border border-slate-600/60 bg-ink-900/60 px-3 py-1.5 text-sm font-medium text-slate-200 transition hover:bg-slate-700/50"
+              className="rounded-lg border border-line bg-paper-light px-3 py-1.5 text-sm font-medium text-ink-soft transition hover:bg-paper-dark"
             >
               🔌 Integrations
             </button>
@@ -240,7 +240,7 @@ export default function ProgrammeCanvas({
               type="button"
               onClick={onSave}
               title="Save this programme (plan + progress) to your library"
-              className="rounded-lg border border-slate-600/60 bg-ink-900/60 px-3 py-1.5 text-sm font-medium text-slate-200 transition hover:bg-slate-700/50"
+              className="rounded-lg border border-line bg-paper-light px-3 py-1.5 text-sm font-medium text-ink-soft transition hover:bg-paper-dark"
             >
               💾 Save
             </button>
@@ -250,20 +250,20 @@ export default function ProgrammeCanvas({
                 setShowLibrary((v) => !v);
                 setShowIntegrations(false);
               }}
-              className="rounded-lg border border-slate-600/60 bg-ink-900/60 px-3 py-1.5 text-sm font-medium text-slate-200 transition hover:bg-slate-700/50"
+              className="rounded-lg border border-line bg-paper-light px-3 py-1.5 text-sm font-medium text-ink-soft transition hover:bg-paper-dark"
             >
               📚 Library{library.length ? ` (${library.length})` : ""}
             </button>
             {showLibrary && (
-              <div className="absolute right-0 top-11 z-20 w-80 rounded-xl border border-slate-600/60 bg-ink-900/95 p-2 shadow-2xl backdrop-blur-sm">
+              <div className="absolute right-0 top-11 z-20 w-80 rounded-xl border border-line bg-paper-light p-2 shadow-pop">
                 {library.length === 0 ? (
-                  <div className="px-2 py-3 text-center text-xs text-slate-500">
+                  <div className="px-2 py-3 text-center text-xs text-ink-mute">
                     No saved programmes yet. “Save” keeps the current plan + progress + audit trail.
                   </div>
                 ) : (
                   <ul className="max-h-72 space-y-1 overflow-y-auto">
                     {library.map((it) => (
-                      <li key={it.savedAt} className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-slate-800/60">
+                      <li key={it.savedAt} className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-paper">
                         <button
                           type="button"
                           onClick={() => {
@@ -272,8 +272,8 @@ export default function ProgrammeCanvas({
                           }}
                           className="min-w-0 flex-1 text-left"
                         >
-                          <div className="truncate text-sm text-slate-200">{it.title}</div>
-                          <div className="text-[10px] text-slate-500">
+                          <div className="truncate text-sm text-ink">{it.title}</div>
+                          <div className="text-[10px] text-ink-mute">
                             {it.source === "llm" ? "generated" : it.source === "fallback" ? "fallback" : "seed"} ·{" "}
                             {new Date(it.savedAt).toLocaleString()}
                           </div>
@@ -282,7 +282,7 @@ export default function ProgrammeCanvas({
                           type="button"
                           onClick={() => onDeleteSaved && onDeleteSaved(it.savedAt)}
                           title="Delete"
-                          className="rounded px-1.5 text-slate-500 transition hover:text-rose-300"
+                          className="rounded px-1.5 text-ink-mute transition hover:text-danger"
                         >
                           ✕
                         </button>
@@ -297,8 +297,8 @@ export default function ProgrammeCanvas({
         </div>
 
         {/* Change request input */}
-        <div className="rounded-2xl border border-slate-700/60 bg-ink-900/60 p-4 shadow-xl shadow-black/20 backdrop-blur-sm">
-          <label className="mb-1.5 block text-[11px] font-medium uppercase tracking-wider text-slate-400">
+        <div className="rounded-2xl border border-line bg-paper-light p-4 shadow-card">
+          <label className="mb-1.5 block text-[11px] font-medium uppercase tracking-wider text-ink-mute">
             Business change request
           </label>
           <div className="flex flex-col gap-2 sm:flex-row">
@@ -319,13 +319,13 @@ export default function ProgrammeCanvas({
               }}
               placeholder={reqPlaceholder}
               disabled={generating}
-              className="flex-1 rounded-lg border border-slate-600/60 bg-ink-950/70 px-3.5 py-2.5 text-sm text-slate-100 placeholder-slate-500 outline-none transition focus:border-indigo-500/70 focus:ring-2 focus:ring-indigo-500/20 disabled:opacity-60"
+              className="flex-1 rounded-lg border border-line bg-white px-3.5 py-2.5 text-sm text-ink placeholder-ink-mute outline-none transition focus:border-brand-400 focus:ring-2 focus:ring-brand-400/20 disabled:opacity-60"
             />
             <button
               type="button"
               onClick={submit}
               disabled={generating || !req.trim()}
-              className="inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-500 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-indigo-900/30 transition hover:bg-indigo-400 disabled:cursor-not-allowed disabled:opacity-40"
+              className="inline-flex items-center justify-center gap-2 rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white shadow-card transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-40"
             >
               {generating ? (
                 <>
@@ -339,22 +339,22 @@ export default function ProgrammeCanvas({
           </div>
           <div className="mt-2 flex flex-wrap items-center gap-2">
             {programme.source === "llm" && (
-              <span className="rounded-full border border-indigo-500/30 bg-indigo-500/10 px-2 py-0.5 text-[11px] font-medium text-indigo-300">
+              <span className="rounded-full border border-brand-400/30 bg-brand-50 px-2 py-0.5 text-[11px] font-medium text-brand-700">
                 ✦ generated live
               </span>
             )}
             {programme.source === "fallback" && (
               <span
-                className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[11px] font-medium text-amber-300"
+                className="rounded-full border border-inferred/30 bg-inferred-tint px-2 py-0.5 text-[11px] font-medium text-[#8a6410]"
                 title={programme.detail || "live decomposition unavailable"}
               >
                 fallback plan · live decomposition unavailable
               </span>
             )}
-            {programme.subtitle && <span className="text-xs text-slate-400">{programme.subtitle}</span>}
+            {programme.subtitle && <span className="text-xs text-ink-soft">{programme.subtitle}</span>}
           </div>
           {planError && (
-            <div className="mt-2 rounded-lg border border-rose-500/40 bg-rose-500/10 px-3 py-2 text-sm text-rose-200">
+            <div className="mt-2 rounded-lg border border-danger/40 bg-danger-tint px-3 py-2 text-sm text-[#b02138]">
               Could not generate a plan: {planError.error || String(planError)}
             </div>
           )}
@@ -362,20 +362,20 @@ export default function ProgrammeCanvas({
       </header>
 
       {/* Control bar — plan gate + progress */}
-      <div className="mb-2 flex flex-wrap items-center gap-3 rounded-xl border border-slate-700/60 bg-ink-900/50 px-4 py-2.5">
+      <div className="mb-2 flex flex-wrap items-center gap-3 rounded-xl border border-line bg-paper-light px-4 py-2.5">
         {!approved ? (
           <>
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/40 bg-amber-500/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-amber-300">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-brand-400/40 bg-brand-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-brand-700">
               ✎ Draft
             </span>
-            <span className="text-xs text-slate-400">
+            <span className="text-xs text-ink-soft">
               Inspect &amp; amend — drag to arrange, drag handle-to-handle to link, click a stage to edit, ⌫ to delete.
             </span>
             <div className="ml-auto flex items-center gap-2">
               <button
                 type="button"
                 onClick={addStage}
-                className="rounded-lg border border-slate-500/60 bg-slate-700/40 px-3 py-1.5 text-sm font-medium text-slate-100 transition hover:bg-slate-600/50"
+                className="rounded-lg border border-line bg-paper-light px-3 py-1.5 text-sm font-medium text-ink transition hover:bg-paper-dark"
               >
                 + Add stage
               </button>
@@ -383,7 +383,7 @@ export default function ProgrammeCanvas({
                 type="button"
                 onClick={approve}
                 disabled={nodes.length === 0}
-                className="rounded-lg bg-emerald-600 px-4 py-1.5 text-sm font-semibold text-white shadow-lg shadow-emerald-900/40 transition hover:bg-emerald-500 disabled:opacity-40"
+                className="rounded-lg bg-brand-500 px-4 py-1.5 text-sm font-semibold text-white shadow-card transition hover:bg-brand-700 disabled:opacity-40"
               >
                 ✓ Approve plan
               </button>
@@ -391,26 +391,26 @@ export default function ProgrammeCanvas({
           </>
         ) : (
           <>
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-emerald-300">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-verified/40 bg-verified-tint px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-verified">
               ✓ Approved
             </span>
-            <span className="text-xs text-slate-400">Click a stage to open its cockpit and work the sub-change.</span>
+            <span className="text-xs text-ink-soft">Click a stage to open its cockpit and work the sub-change.</span>
             <div className="ml-auto flex items-center gap-3">
               <div className="hidden items-center gap-2 sm:flex">
-                <div className="h-2 w-40 overflow-hidden rounded-full bg-slate-700/50">
+                <div className="h-2 w-40 overflow-hidden rounded-full bg-paper-dark">
                   <div
-                    className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-emerald-400 transition-all"
+                    className="h-full rounded-full bg-verified transition-all"
                     style={{ width: `${pct}%` }}
                   />
                 </div>
-                <span className="text-xs font-medium text-slate-300">
-                  <span className="text-emerald-300">{done}</span> of {total} done
+                <span className="text-xs font-medium text-ink-soft">
+                  <span className="text-verified">{done}</span> of {total} done
                 </span>
               </div>
               <button
                 type="button"
                 onClick={() => onReopen && onReopen()}
-                className="rounded-lg border border-slate-500/60 bg-slate-700/40 px-3 py-1.5 text-sm font-medium text-slate-100 transition hover:bg-slate-600/50"
+                className="rounded-lg border border-line bg-paper-light px-3 py-1.5 text-sm font-medium text-ink transition hover:bg-paper-dark"
               >
                 ✎ Edit plan
               </button>
@@ -420,7 +420,7 @@ export default function ProgrammeCanvas({
       </div>
 
       {/* DAG canvas */}
-      <div className="relative h-[600px] overflow-hidden rounded-2xl border border-slate-700/60 bg-ink-950/40 shadow-inner">
+      <div className="relative h-[600px] overflow-hidden rounded-2xl border border-line bg-paper shadow-inner">
         <ReactFlow
           key={`${programme.id}:${programme.source || "seed"}`}
           nodes={nodes}
@@ -441,46 +441,46 @@ export default function ProgrammeCanvas({
           minZoom={0.3}
           proOptions={{ hideAttribution: false }}
         >
-          <Background color="#1e293b" gap={22} size={1} />
+          <Background color="#E6DBEE" gap={22} size={1} />
           <Controls showInteractive={false} />
         </ReactFlow>
 
         {/* Edge legend */}
-        <div className="pointer-events-none absolute bottom-3 left-3 flex flex-col gap-1 rounded-lg border border-slate-700/60 bg-ink-900/80 px-2.5 py-1.5 text-[10px] text-slate-400 backdrop-blur-sm">
+        <div className="pointer-events-none absolute bottom-3 left-3 flex flex-col gap-1 rounded-lg border border-line bg-paper-light/90 px-2.5 py-1.5 text-[10px] text-ink-soft backdrop-blur-sm">
           <span className="flex items-center gap-1.5">
-            <span className="inline-block h-0.5 w-5 bg-emerald-500" /> verified dependency (parsed)
+            <span className="inline-block h-0.5 w-5 bg-verified" /> verified dependency (parsed)
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="inline-block h-0.5 w-5 border-t border-dashed border-amber-500" /> inferred (LLM / manual)
+            <span className="inline-block h-0.5 w-5 border-t border-dashed border-inferred" /> inferred (LLM / manual)
           </span>
         </div>
 
         {/* Edit panel (draft, node selected) */}
         {!approved && selectedNode && (
-          <div className="absolute right-3 top-3 w-72 rounded-xl border border-slate-600/60 bg-ink-900/95 p-3 shadow-2xl backdrop-blur-sm">
+          <div className="absolute right-3 top-3 w-72 rounded-xl border border-line bg-paper-light p-3 shadow-pop">
             <div className="mb-2 flex items-center justify-between">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Edit stage</span>
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-ink-mute">Edit stage</span>
               <button
                 type="button"
                 onClick={() => setSelectedId(null)}
-                className="rounded px-1.5 text-slate-500 hover:text-slate-300"
+                className="rounded px-1.5 text-ink-mute hover:text-ink-soft"
               >
                 ✕
               </button>
             </div>
-            <label className="mb-1 block text-[10px] uppercase tracking-wider text-slate-500">Label</label>
+            <label className="mb-1 block text-[10px] uppercase tracking-wider text-ink-mute">Label</label>
             <input
               value={selectedNode.data.label}
               onChange={(e) => updateSelected({ label: e.target.value })}
-              className="mb-2 w-full rounded-md border border-slate-600/60 bg-ink-950/70 px-2 py-1.5 text-sm text-slate-100 outline-none focus:border-indigo-500/70"
+              className="mb-2 w-full rounded-md border border-line bg-white px-2 py-1.5 text-sm text-ink outline-none focus:border-brand-400"
             />
-            <label className="mb-1 block text-[10px] uppercase tracking-wider text-slate-500">Change request</label>
+            <label className="mb-1 block text-[10px] uppercase tracking-wider text-ink-mute">Change request</label>
             <textarea
               value={selectedNode.data.changeRequest}
               onChange={(e) => updateSelected({ changeRequest: e.target.value })}
-              className="mb-2 h-24 w-full resize-y rounded-md border border-slate-600/60 bg-ink-950/70 px-2 py-1.5 text-[13px] leading-relaxed text-slate-200 outline-none focus:border-indigo-500/70"
+              className="mb-2 h-24 w-full resize-y rounded-md border border-line bg-white px-2 py-1.5 text-[13px] leading-relaxed text-ink outline-none focus:border-brand-400"
             />
-            <label className="mb-1 block text-[10px] uppercase tracking-wider text-slate-500">
+            <label className="mb-1 block text-[10px] uppercase tracking-wider text-ink-mute">
               Edit sites (comma-separated)
             </label>
             <input
@@ -488,12 +488,12 @@ export default function ProgrammeCanvas({
               onChange={(e) =>
                 updateSelected({ editSites: e.target.value.split(",").map((s) => s.trim().toUpperCase()).filter(Boolean) })
               }
-              className="mb-3 w-full rounded-md border border-slate-600/60 bg-ink-950/70 px-2 py-1.5 font-mono text-[12px] text-slate-200 outline-none focus:border-indigo-500/70"
+              className="mb-3 w-full rounded-md border border-line bg-white px-2 py-1.5 font-mono text-[12px] text-ink outline-none focus:border-brand-400"
             />
             <button
               type="button"
               onClick={deleteSelected}
-              className="w-full rounded-md border border-rose-500/50 bg-rose-500/10 px-2 py-1.5 text-sm font-medium text-rose-200 transition hover:bg-rose-500/20"
+              className="w-full rounded-md border border-danger/50 bg-danger-tint px-2 py-1.5 text-sm font-medium text-[#b02138] transition hover:bg-[#f7c2cb]"
             >
               ⌫ Delete stage
             </button>
@@ -501,15 +501,15 @@ export default function ProgrammeCanvas({
         )}
 
         {generating && (
-          <div className="absolute inset-0 flex items-center justify-center bg-ink-950/50 backdrop-blur-[1px]">
-            <div className="flex items-center gap-2 rounded-lg border border-slate-700/60 bg-ink-900/90 px-4 py-2 text-sm text-slate-200">
-              <span className="h-4 w-4 animate-spin rounded-full border-2 border-slate-500/50 border-t-slate-200" />
+          <div className="absolute inset-0 flex items-center justify-center bg-paper/60 backdrop-blur-[1px]">
+            <div className="flex items-center gap-2 rounded-lg border border-line bg-paper-light px-4 py-2 text-sm text-ink-soft shadow-card">
+              <span className="h-4 w-4 animate-spin rounded-full border-2 border-line border-t-brand-500" />
               Decomposing the change into a plan…
             </div>
           </div>
         )}
       </div>
-      <p className="mt-2 text-center text-[11px] text-slate-500">
+      <p className="mt-2 text-center text-[11px] text-ink-mute">
         {approved
           ? "Approved — click any stage to open its cockpit (Locate → Explain → Impact → Propose → Record)."
           : "Draft — nothing runs until you approve. Amend the decomposition, then Approve plan (⌘/Ctrl+Enter) to lock it and begin."}

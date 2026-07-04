@@ -1,25 +1,26 @@
 import { Handle, Position } from "@xyflow/react";
 
-// Custom React Flow node for a Level-1 sub-change. Border colour + badge encode status
-// (Airflow border-colour convention + Linear status tokens). Click is handled by the canvas.
+// Custom React Flow node for a Level-1 sub-change. Border colour + badge encode status.
+// shft trust palette: in-progress = brand purple, awaiting = Signal Coral (the human-gate
+// moment), done = verified green, blocked = danger. Click is handled by the canvas.
 const STYLES = {
-  pending: { ring: "border-slate-600/70", dot: "bg-slate-500", label: "Pending", tint: "text-slate-400", icon: "" },
-  in_progress: { ring: "border-sky-500/80 shadow-sky-900/30", dot: "bg-sky-400 animate-pulse", label: "In progress", tint: "text-sky-300", icon: "" },
-  awaiting_approval: { ring: "border-amber-500/80 shadow-amber-900/30", dot: "bg-amber-400 animate-pulse", label: "Awaiting approval", tint: "text-amber-300", icon: "✋" },
-  done: { ring: "border-emerald-500/80 shadow-emerald-900/30", dot: "bg-emerald-400", label: "Done", tint: "text-emerald-300", icon: "✓" },
-  blocked: { ring: "border-rose-500/80", dot: "bg-rose-400", label: "Blocked", tint: "text-rose-300", icon: "⚠" },
+  pending: { ring: "border-line", dot: "bg-ink-mute", label: "Pending", tint: "text-ink-mute", icon: "" },
+  in_progress: { ring: "border-brand-400 shadow-card", dot: "bg-brand-400 animate-pulse", label: "In progress", tint: "text-brand-700", icon: "" },
+  awaiting_approval: { ring: "border-coral-400 shadow-card", dot: "bg-coral-400 animate-pulse", label: "Awaiting approval", tint: "text-magenta-700", icon: "✋" },
+  done: { ring: "border-verified shadow-card", dot: "bg-verified", label: "Done", tint: "text-verified", icon: "✓" },
+  blocked: { ring: "border-danger", dot: "bg-danger", label: "Blocked", tint: "text-danger", icon: "⚠" },
 };
 
 export default function StatusNode({ data }) {
   const s = STYLES[data.status] || STYLES.pending;
   return (
     <div
-      className={`w-[248px] cursor-pointer rounded-xl border-2 ${s.ring} bg-ink-900/95 px-3 py-2.5 shadow-lg transition hover:brightness-110`}
+      className={`w-[248px] cursor-pointer rounded-xl border-2 ${s.ring} bg-paper-light px-3 py-2.5 shadow-card transition hover:-translate-y-px hover:shadow-pop`}
     >
-      <Handle type="target" position={Position.Left} className="!h-2 !w-2 !border-slate-500 !bg-slate-700" />
+      <Handle type="target" position={Position.Left} className="!h-2 !w-2 !border-line !bg-paper-dark" />
       <div className="flex items-start gap-2">
         <span className={`mt-1 h-2.5 w-2.5 shrink-0 rounded-full ${s.dot}`} />
-        <span className="flex-1 text-[13px] font-semibold leading-snug text-slate-100">
+        <span className="flex-1 text-[13px] font-semibold leading-snug text-ink">
           {data.label}
         </span>
         {s.icon && <span className={`text-sm ${s.tint}`}>{s.icon}</span>}
@@ -27,12 +28,12 @@ export default function StatusNode({ data }) {
       <div className="mt-1.5 flex items-center justify-between gap-2">
         <span className={`text-[10px] font-medium uppercase tracking-wider ${s.tint}`}>{s.label}</span>
         {data.editSites && data.editSites.length > 0 && (
-          <span className="truncate font-mono text-[10px] text-slate-500">
+          <span className="truncate font-mono text-[10px] text-ink-mute">
             {data.editSites.join(" · ")}
           </span>
         )}
       </div>
-      <Handle type="source" position={Position.Right} className="!h-2 !w-2 !border-slate-500 !bg-slate-700" />
+      <Handle type="source" position={Position.Right} className="!h-2 !w-2 !border-line !bg-paper-dark" />
     </div>
   );
 }
