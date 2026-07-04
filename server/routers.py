@@ -66,6 +66,13 @@ class PlanRequest(BaseModel):
     change_request: str
 
 
+class PlanApproved(BaseModel):
+    title: str
+    stages: int
+    verified_edges: int = 0
+    inferred_edges: int = 0
+
+
 # --------------------------------------------------------------------------- #
 # Endpoints                                                                   #
 # --------------------------------------------------------------------------- #
@@ -116,7 +123,23 @@ async def cell_run(body: CellRun, request: Request):
         st = await request.app.state.graph.aget_state(cfg)
     except Exception as exc:  # never crash the session (§16)
         return _err(500, "cell execution failed", str(exc))
-    return {"state": _to_session_state(st.values)}
+    state = _to_session_state(st.values)
+
+    # Workflow hook: a drafted change waiting on a human is exactly what belongs in the team's
+    # channel — notify (deep link only; approval itself stays in the cockpit, by design).
+    if body.cell == "propose":
+        pc = (state.get("cells") or {}).get("propose") or {}
+        if pc.get("status") == "awaiting_approval":
+            from server import integrations
+
+            diff = pc.get("proposed_diff") or ""
+            excerpt = "\n".join(l for l in diff.split("\n") if l[:1] in "+-")[:400]
+            integrations.notify("stage.awaiting_approval", {
+                "change_request": sess["change_request"],
+                "session_id": body.session_id,
+                "diff_excerpt": excerpt,
+            })
+    return {"state": state}
 
 
 @router.post("/cell/approve")
@@ -144,7 +167,22 @@ async def cell_approve(body: CellApprove, request: Request):
         st = await request.app.state.graph.aget_state(cfg)
     except Exception as exc:
         return _err(500, "approval failed", str(exc))
-    return {"state": _to_session_state(st.values)}
+    state = _to_session_state(st.values)
+
+    # Workflow hook: the ledger receipt lands in the channel — approver, verbatim rationale, hash.
+    entry = ((state.get("cells") or {}).get("record") or {}).get("payload", {}).get("ledger_entry")
+    if entry:
+        from server import integrations
+
+        integrations.notify("change.recorded", {
+            "intent": entry.get("intent", ""),
+            "decision": entry.get("decision", ""),
+            "approver": entry.get("approver", ""),
+            "programs": entry.get("programs", []),
+            "rationale": entry.get("rationale", ""),
+            "entry_hash": entry.get("entry_hash", ""),
+        })
+    return {"state": state}
 
 
 @router.get("/ledger")
@@ -160,7 +198,29 @@ async def verify_ledger(body: SessionRef):
     out = {"verified": ok}
     if broken_at is not None:
         out["broken_at"] = broken_at
+    if not ok:
+        # The tamper alarm — a broken hash chain is an incident, and incidents go to the channel.
+        from server import integrations
+
+        integrations.notify("ledger.verify_failed", {"broken_at": broken_at})
     return out
+
+
+@router.post("/plan/approved")
+async def plan_approved(body: PlanApproved):
+    """Notification-only hook: the frontend reports a plan approval so it lands in the team's
+    channel. Not a control-plane endpoint — approval state lives in the client/session."""
+    from server import integrations
+
+    entry = integrations.notify("plan.approved", body.model_dump())
+    return {"ok": True, "delivery": entry["status"]}
+
+
+@router.get("/integrations/status")
+async def integrations_status():
+    from server import integrations
+
+    return integrations.get_status()
 
 
 @router.post("/ledger/tamper")

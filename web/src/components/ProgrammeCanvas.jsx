@@ -11,6 +11,7 @@ import {
 import "@xyflow/react/dist/style.css";
 import StatusNode from "./StatusNode.jsx";
 import ProgrammeLedger from "./ProgrammeLedger.jsx";
+import IntegrationsPanel from "./IntegrationsPanel.jsx";
 import { layoutProgramme } from "../programme.js";
 
 const nodeTypes = { stage: StatusNode };
@@ -53,6 +54,7 @@ export default function ProgrammeCanvas({
 }) {
   const [req, setReq] = useState(programme.title || "");
   const [showLibrary, setShowLibrary] = useState(false);
+  const [showIntegrations, setShowIntegrations] = useState(false);
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [selectedId, setSelectedId] = useState(null);
@@ -199,6 +201,17 @@ export default function ProgrammeCanvas({
           <div className="relative flex items-center gap-2">
             <button
               type="button"
+              onClick={() => {
+                setShowIntegrations((v) => !v);
+                setShowLibrary(false);
+              }}
+              title="Workflow integrations — Slack notifications, outbox, roadmap"
+              className="rounded-lg border border-slate-600/60 bg-ink-900/60 px-3 py-1.5 text-sm font-medium text-slate-200 transition hover:bg-slate-700/50"
+            >
+              🔌 Integrations
+            </button>
+            <button
+              type="button"
               onClick={onSave}
               title="Save this programme (plan + progress) to your library"
               className="rounded-lg border border-slate-600/60 bg-ink-900/60 px-3 py-1.5 text-sm font-medium text-slate-200 transition hover:bg-slate-700/50"
@@ -207,7 +220,10 @@ export default function ProgrammeCanvas({
             </button>
             <button
               type="button"
-              onClick={() => setShowLibrary((v) => !v)}
+              onClick={() => {
+                setShowLibrary((v) => !v);
+                setShowIntegrations(false);
+              }}
               className="rounded-lg border border-slate-600/60 bg-ink-900/60 px-3 py-1.5 text-sm font-medium text-slate-200 transition hover:bg-slate-700/50"
             >
               📚 Library{library.length ? ` (${library.length})` : ""}
@@ -250,6 +266,7 @@ export default function ProgrammeCanvas({
                 )}
               </div>
             )}
+            <IntegrationsPanel open={showIntegrations} onClose={() => setShowIntegrations(false)} />
           </div>
         </div>
 

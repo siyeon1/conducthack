@@ -3,7 +3,7 @@ import LandingPage from "./components/LandingPage.jsx";
 import ProgrammeCanvas from "./components/ProgrammeCanvas.jsx";
 import StageCockpit from "./components/StageCockpit.jsx";
 import { FCA_PROGRAMME } from "./programme.js";
-import { generatePlan } from "./api.js";
+import { generatePlan, notifyPlanApproved } from "./api.js";
 import { listLibrary, saveToLibrary, deleteFromLibrary } from "./library.js";
 
 // Two-level shell: Level-1 Change Programme canvas (the decomposition DAG) ⇄ Level-2 Stage cockpit
@@ -59,6 +59,14 @@ export default function App() {
   const handleApprove = useCallback((editedProgramme) => {
     setProgramme(editedProgramme);
     setApproved(true);
+    // Workflow hook (fire-and-forget): the kickoff lands in the team's channel.
+    const edges = editedProgramme.edges || [];
+    notifyPlanApproved({
+      title: editedProgramme.title || "",
+      stages: (editedProgramme.nodes || []).length,
+      verified_edges: edges.filter((e) => e.verified).length,
+      inferred_edges: edges.filter((e) => !e.verified).length,
+    });
   }, []);
 
   const handleReopen = useCallback(() => {

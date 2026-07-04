@@ -186,6 +186,34 @@ async function mockApprove(session_id, decision, edited_diff, rationale) {
 // --------------------------------------------------------------------------- //
 // Public API                                                                  //
 // --------------------------------------------------------------------------- //
+// ---- integrations ("works with your current workflow") ---- //
+export async function getIntegrations() {
+  if (USE_MOCK) {
+    await delay(150);
+    return {
+      slack: { connected: false },
+      outbox: [
+        {
+          event: "change.recorded",
+          at: new Date().toISOString(),
+          text: "⛓ Change recorded to the ledger by engineer@bank",
+          status: "queued — no webhook configured",
+        },
+      ],
+    };
+  }
+  return apiFetch("/integrations/status");
+}
+
+export async function notifyPlanApproved(payload) {
+  if (USE_MOCK) return { ok: true, delivery: "queued — no webhook configured" };
+  try {
+    return await apiFetch("/plan/approved", { method: "POST", body: payload });
+  } catch {
+    return { ok: false }; // notification-only — never block the approve flow
+  }
+}
+
 // Level-1: decompose a change request into a DAG programme. Mock returns the canned plan
 // (titled by the request); live hits POST /plan (which self-guards to a fallback plan).
 export async function generatePlan(change_request) {
