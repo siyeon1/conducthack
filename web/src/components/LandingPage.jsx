@@ -134,13 +134,6 @@ export default function LandingPage({ onEnter }) {
                 <button type="button" onClick={onEnter} className="btn btn-primary">
                   See the proof →
                 </button>
-                <button
-                  type="button"
-                  onClick={onEnter}
-                  className="link-underline font-mono text-[12px] font-semibold uppercase tracking-[0.14em] text-white/60 transition-colors hover:text-white"
-                >
-                  Book a demo
-                </button>
               </div>
               <div className="eyebrow mt-7 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-white/40">
                 <span>Fintech</span>
@@ -411,9 +404,6 @@ export default function LandingPage({ onEnter }) {
             <div className="mt-6 flex flex-wrap justify-center gap-3">
               <button type="button" onClick={onEnter} className="btn btn-primary">
                 See the proof →
-              </button>
-              <button type="button" onClick={onEnter} className="btn btn-ghost">
-                Book a demo
               </button>
             </div>
             <div className="mt-5 flex justify-center">
