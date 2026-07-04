@@ -479,7 +479,7 @@ export default function ProgrammeCanvas({
           : "Draft — nothing runs until you approve. Amend the decomposition, then Approve plan (⌘/Ctrl+Enter) to lock it and begin."}
       </p>
 
-      <ProgrammeLedger entries={ledger} />
+      <ProgrammeLedger entries={ledger} title={programme.title} />
     </div>
   );
 }

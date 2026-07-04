@@ -4,7 +4,26 @@
 // audit trail that regulated change (EU AI Act Art. 14 / NIST RMF) requires.
 const short = (h) => (h ? `${String(h).slice(0, 10)}…` : "—");
 
-export default function ProgrammeLedger({ entries = [] }) {
+// One-click "Senior Manager evidence pack": the full programme audit trail as JSON —
+// stage, decision, verbatim rationale, programs, and the complete hash-chain fields —
+// the artifact an SM&CR-accountable individual holds up as their "reasonable steps" file.
+function exportEvidencePack(title, entries) {
+  const pack = {
+    kind: "legacy-move-evidence-pack",
+    programme: title || "",
+    exported_at: new Date().toISOString(),
+    note: "Each entry is hash-chained (RFC-8785 canonical JSON, SHA-256). Recompute canonical_entry_hash over the hashed fields to verify; any alteration breaks the chain.",
+    sub_changes: entries.map(({ nodeId, label, entry }) => ({ stage_id: nodeId, stage: label, entry })),
+  };
+  const blob = new Blob([JSON.stringify(pack, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "legacy-move-evidence-pack.json";
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+export default function ProgrammeLedger({ entries = [], title = "" }) {
   if (!entries.length) return null;
   return (
     <section className="mt-5 rounded-2xl border border-slate-700/60 bg-ink-900/60 shadow-xl shadow-black/20">
@@ -20,6 +39,14 @@ export default function ProgrammeLedger({ entries = [] }) {
         <span className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-medium text-emerald-300">
           {entries.length} sub-change{entries.length === 1 ? "" : "s"} recorded
         </span>
+        <button
+          type="button"
+          onClick={() => exportEvidencePack(title, entries)}
+          title="Download the full programme audit trail — named approvers, verbatim justifications, hash chain — as a verifiable JSON evidence pack"
+          className="rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-3 py-1.5 text-sm font-semibold text-emerald-200 transition hover:bg-emerald-500/20"
+        >
+          ⬇ Senior Manager evidence pack
+        </button>
       </header>
       <div className="overflow-x-auto px-5 py-4">
         <table className="w-full min-w-[820px] border-collapse text-sm">
